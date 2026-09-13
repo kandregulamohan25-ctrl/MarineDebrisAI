@@ -102,7 +102,7 @@ export async function runRealSonarAnalysis({
   formData.append('iou', String(iouThreshold));
 
   onProgress(50, 'Running YOLO best.pt inference on Python backend...');
-  const analyzeUrl = getApiUrl('/api/analyze');
+  const analyzeUrl = getApiUrl('/api/detect');
   const response = await fetch(analyzeUrl, {
     method: 'POST',
     body: formData

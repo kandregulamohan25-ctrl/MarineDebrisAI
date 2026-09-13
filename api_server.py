@@ -20,8 +20,9 @@ import cv2
 import torch
 import gc
 
-# Limit threads to conserve memory on small free-tier servers
-torch.set_num_threads(1)
+# Allow PyTorch to use its default thread count for faster inference
+# We rely on image downscaling (MAX_DIM) to prevent OOM
+# torch.set_num_threads(1)
 cv2.setNumThreads(1)
 
 # Project root
@@ -91,9 +92,9 @@ async def health_check():
     }
 
 
-@app.post("/api/analyze")
-@app.post("/analyze")
-async def analyze_sonar_image(
+@app.post("/api/detect")
+@app.post("/detect")
+async def run_detection(
     image: UploadFile = File(...),
     latitude_min: Optional[float] = Form(None),
     latitude_max: Optional[float] = Form(None),
