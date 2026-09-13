@@ -16,6 +16,7 @@ import { renderSonarAnalysisView } from './components/SonarAnalysisView.js';
 import { renderDetectionResultsView } from './components/DetectionResultsView.js';
 import { renderGeospatialMapView } from './components/GeospatialMapView.js';
 import { renderReportsView } from './components/ReportsView.js';
+import { renderSystemInfoView } from './components/SystemInfoView.js';
 import { runRealSonarAnalysis, checkBackendHealth } from './services/api.js';
 
 // Application State
@@ -27,24 +28,28 @@ const state = {
 
 const TAB_TITLES = {
   dashboard: {
-    title: 'Dashboard',
+    title: 'Mission Overview',
     subtitle: 'Upload sonar imagery to run detection with best.pt'
   },
   analysis: {
-    title: 'Sonar Analysis',
+    title: 'Sonar Workspace',
     subtitle: 'Image preprocessing & YOLO inference controls'
   },
   results: {
-    title: 'Detection Results',
+    title: 'Detections',
     subtitle: 'Identified target bounding boxes & confidence scores'
   },
   map: {
-    title: 'Geospatial Map',
+    title: 'Survey Map',
     subtitle: 'Target coordinates & survey localization'
   },
   reports: {
-    title: 'Reports',
+    title: 'Reports & Export',
     subtitle: 'Detection summary & CSV / JSON data export'
+  },
+  system: {
+    title: 'Model & Data',
+    subtitle: 'System transparency and technical telemetry'
   }
 };
 
@@ -188,6 +193,10 @@ function renderCurrentTab() {
       viewport.appendChild(renderReportsView({
         scanData: state.currentAnalysis
       }));
+      break;
+
+    case 'system':
+      viewport.appendChild(renderSystemInfoView());
       break;
 
     default:

@@ -18,21 +18,21 @@ export function renderGeospatialMapView({ scanData }) {
 
   if (!hasGps) {
     container.innerHTML = `
-      <div class="panel" style="text-align: center; padding: 60px 24px; max-width: 640px; margin: 40px auto;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef3c7; border: 1px solid #fde68a; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
+    <div class="panel" style="text-align: center; padding: 60px 24px; max-width: 640px; margin: 40px auto; border-color: var(--color-warning); border-style: dashed; background: rgba(255, 176, 0, 0.05);">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--bg-dark); border: 1px solid var(--color-warning); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 0 15px rgba(255, 176, 0, 0.3);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2">
             <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>
           </svg>
         </div>
-        <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
-          Geographic Coordinates Not Available
+        <h2 style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--color-warning); margin-bottom: 8px; letter-spacing: 1px;">
+          GPS TELEMETRY OFFLINE
         </h2>
-        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
-          The current sonar scan was processed without geographic survey footprint metadata.
-          <strong>MarineDebrisAI never fabricates GPS coordinates.</strong>
+        <p style="font-family: var(--font-mono); font-size: 12px; color: var(--text-main); line-height: 1.5; margin-bottom: 16px;">
+          CURRENT SCAN LACKS GEOGRAPHIC BOUNDARY METADATA.<br/>
+          <strong>MARINEDEBRIS_AI DOES NOT FABRICATE COORDINATES.</strong>
         </p>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
-          To view target detections on the map, provide survey footprint coordinates (Min/Max Latitude & Longitude) in the <strong>Sonar Analysis</strong> view.
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">
+          Provide survey footprint coordinates (Min/Max Lat/Lon) in the Workspace terminal to enable map tracking.
         </p>
       </div>
     `;
@@ -45,21 +45,28 @@ export function renderGeospatialMapView({ scanData }) {
 
   container.innerHTML = `
     <!-- Top Information Bar -->
-    <div class="map-telemetry-bar">
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span style="font-weight: 600; color: var(--text-primary);">Detected Locations:</span>
-        <span class="badge badge-green">${detections.length} Georeferenced</span>
-        <span style="color: var(--text-muted);">Survey Scan:</span>
-        <span style="font-weight: 600; color: var(--color-primary);">${scanData.filename || 'sonar_image.jpg'}</span>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: var(--bg-panel); border: 1px solid var(--bg-panel-border); border-radius: var(--radius-sm); padding: 16px 24px; box-shadow: var(--shadow-panel); flex-wrap: wrap; gap: 12px; backdrop-filter: var(--glass-blur);">
+      <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; font-family: var(--font-mono);">
+        <span style="font-weight: 700; color: var(--text-main);">GEO-TRACKING:</span>
+        <span class="nav-badge" style="font-size: 12px; padding: 4px 10px;">${detections.length} TARGET(S) LOCKED</span>
+        <span style="color: var(--text-muted);">SOURCE:</span>
+        <span style="font-weight: 700; color: var(--color-primary);">${scanData.filename || 'SONAR_STREAM.RAW'}</span>
       </div>
-      <div style="font-size: 12px; color: var(--text-muted);">
-        Map Provider: OpenStreetMap (No API Key Required)
+      <div style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase;">
+        PROVIDER: OPENSTREETMAP (NO API KEY REQUIRED)
       </div>
     </div>
 
     <!-- Scientific Map Canvas Card -->
-    <div class="map-canvas-card">
-      <div id="nauticalMap" style="width: 100%; height: 100%;"></div>
+    <div class="panel" style="height: calc(100vh - 280px); padding: 4px; border-radius: var(--radius-md); overflow: hidden; position: relative;">
+      
+      <!-- Overlay Reticles -->
+      <div style="position: absolute; top: 20px; left: 20px; width: 30px; height: 30px; border-top: 2px solid var(--color-primary); border-left: 2px solid var(--color-primary); z-index: 1000; pointer-events: none;"></div>
+      <div style="position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; border-top: 2px solid var(--color-primary); border-right: 2px solid var(--color-primary); z-index: 1000; pointer-events: none;"></div>
+      <div style="position: absolute; bottom: 20px; left: 20px; width: 30px; height: 30px; border-bottom: 2px solid var(--color-primary); border-left: 2px solid var(--color-primary); z-index: 1000; pointer-events: none;"></div>
+      <div style="position: absolute; bottom: 20px; right: 20px; width: 30px; height: 30px; border-bottom: 2px solid var(--color-primary); border-right: 2px solid var(--color-primary); z-index: 1000; pointer-events: none;"></div>
+
+      <div id="nauticalMap" style="width: 100%; height: 100%; border-radius: var(--radius-sm); filter: invert(90%) hue-rotate(180deg) contrast(1.1) brightness(0.9);"></div>
     </div>
   `;
 

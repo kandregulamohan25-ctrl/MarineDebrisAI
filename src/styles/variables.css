@@ -1,96 +1,93 @@
-/* ============================================================
-   MarineDebrisAI - Sonar Dark Mode Theme
-   Sleek, hackathon-winning dark mode palette with glowing accents
-   ============================================================ */
-
 :root {
-  /* Dark Mode Base & Backgrounds */
-  --color-bg-app: #09090b; /* zinc-950 */
-  --color-bg-card: #18181b; /* zinc-900 */
-  --color-bg-subtle: #27272a; /* zinc-800 */
-  --color-bg-hover: #3f3f46; /* zinc-700 */
-  --color-bg-dark: #000000;
+  /* 
+   * MARINEDEBRIS AI - NAVAL MISSION CONTROL THEME
+   * Deep ocean navy, glassmorphism, electric cyan
+   */
+  --bg-dark: #020810;
+  --bg-panel: rgba(10, 25, 47, 0.7);
+  --bg-panel-border: rgba(0, 240, 255, 0.15);
+  --bg-panel-hover: rgba(15, 35, 65, 0.8);
 
-  /* Aliases for compatibility */
-  --color-bg-abyss: var(--color-bg-app);
-  --color-bg-ocean: var(--color-bg-subtle);
-  --color-bg-surface: var(--color-bg-card);
-  --color-bg-surface-elevated: #27272a;
-  --color-bg-surface-hover: var(--color-bg-hover);
+  --color-primary: #00f0ff;
+  --color-primary-glow: rgba(0, 240, 255, 0.3);
+  --color-primary-dim: rgba(0, 240, 255, 0.1);
+  --color-primary-hover: #5cffff;
 
-  /* Borders */
-  --border-subtle: #27272a;
-  --border-medium: #3f3f46;
-  --border-strong: #52525b;
-  --grid-line: rgba(255, 255, 255, 0.05);
+  --color-secondary: #0a4b78;
+  --color-accent: #ffb000;
+  --color-accent-glow: rgba(255, 176, 0, 0.3);
 
-  /* Primary Brand: Sonar Cyan */
-  --color-primary: #06b6d4; /* cyan-500 */
-  --color-primary-hover: #22d3ee; /* cyan-400 */
-  --color-primary-dim: #0891b2; /* cyan-600 */
-  --color-primary-light: rgba(6, 182, 212, 0.15);
-  --color-primary-border: rgba(6, 182, 212, 0.3);
-  --color-primary-bg: rgba(6, 182, 212, 0.05);
-  --color-primary-glow: 0 0 12px rgba(6, 182, 212, 0.4);
+  --color-success: #00ff66;
+  --color-success-glow: rgba(0, 255, 102, 0.2);
+  --color-danger: #ff3366;
+  --color-danger-glow: rgba(255, 51, 102, 0.3);
+  --color-warning: #ffb000;
 
-  /* Status Colors */
-  --color-success: #10b981;
-  --color-success-bg: rgba(16, 185, 129, 0.1);
-  --color-success-border: rgba(16, 185, 129, 0.25);
-  --color-success-dim: #059669;
-  --color-success-glow: 0 0 10px rgba(16, 185, 129, 0.3);
+  --text-main: #e2f1ff;
+  --text-secondary: #88a0b5;
+  --text-muted: #4e6b84;
+  --text-dark: #020810;
+  --text-accent: #00f0ff;
 
-  --color-warning: #f59e0b;
-  --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-warning-border: rgba(245, 158, 11, 0.25);
-  --color-warning-dim: #d97706;
-  --color-warning-glow: 0 0 10px rgba(245, 158, 11, 0.3);
+  --font-mono: 'Space Mono', 'Roboto Mono', 'Courier New', monospace;
+  --font-sans: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
-  --color-danger: #ef4444;
-  --color-danger-bg: rgba(239, 68, 68, 0.1);
-  --color-danger-border: rgba(239, 68, 68, 0.25);
-  --color-danger-dim: #dc2626;
-  --color-danger-glow: 0 0 10px rgba(239, 68, 68, 0.3);
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
 
-  --color-info: #3b82f6;
-  --color-info-bg: rgba(59, 130, 246, 0.1);
-  --color-info-border: rgba(59, 130, 246, 0.25);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
 
-  /* Classification Tag Colors */
-  --color-class-shipwreck: #ef4444;
-  --color-class-shipwreck-bg: rgba(239, 68, 68, 0.15);
-  --color-class-aircraft: #f97316;
-  --color-class-aircraft-bg: rgba(249, 115, 22, 0.15);
-  --color-class-other: #06b6d4;
-  --color-class-other-bg: rgba(6, 182, 212, 0.15);
-  --color-class-fish: #10b981;
-  --color-class-fish-bg: rgba(16, 185, 129, 0.15);
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Typography */
-  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 15px var(--color-primary-glow);
+  --glass-blur: blur(12px);
   
-  --text-primary: #f8fafc; /* slate-50 */
-  --text-secondary: #cbd5e1; /* slate-300 */
-  --text-muted: #94a3b8; /* slate-400 */
-  --text-accent: #22d3ee; /* cyan-400 */
-
-  /* Dark Elevations & Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --shadow-glow-cyan: var(--color-primary-glow);
-  --shadow-glow-green: var(--color-success-glow);
-
+  --sonar-grid: linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+                
+  /* Legacy aliases to prevent breaking untouched files while they migrate */
+  --color-bg-app: var(--bg-dark);
+  --color-bg-card: var(--bg-panel);
+  --color-bg-subtle: var(--bg-panel-hover);
+  --color-bg-hover: var(--bg-panel-hover);
+  --color-bg-dark: var(--bg-dark);
+  --color-bg-abyss: var(--bg-dark);
+  --color-bg-ocean: var(--bg-panel);
+  --color-bg-surface: var(--bg-panel);
+  
+  --border-subtle: var(--bg-panel-border);
+  --border-medium: var(--bg-panel-border);
+  --border-strong: var(--color-primary-dim);
+  
+  --color-success-bg: rgba(0, 255, 102, 0.1);
+  --color-success-dim: rgba(0, 255, 102, 0.5);
+  --color-warning-bg: rgba(255, 176, 0, 0.1);
+  --color-warning-dim: rgba(255, 176, 0, 0.5);
+  --color-danger-bg: rgba(255, 51, 102, 0.1);
+  --color-danger-dim: rgba(255, 51, 102, 0.5);
+  --color-info: var(--color-primary);
+  --color-info-bg: var(--color-primary-dim);
+  
+  /* Classification Legacy aliases */
+  --color-class-shipwreck: var(--color-danger);
+  --color-class-shipwreck-bg: var(--color-danger-bg);
+  --color-class-aircraft: var(--color-warning);
+  --color-class-aircraft-bg: var(--color-warning-bg);
+  --color-class-other: var(--color-primary);
+  --color-class-other-bg: var(--color-info-bg);
+  --color-class-fish: var(--color-success);
+  --color-class-fish-bg: var(--color-success-bg);
+  
   /* Dimensions & Spacing */
   --sidebar-width: 240px;
   --header-height: 64px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-full: 9999px;
-
-  /* Transitions */
-  --transition-fast: 0.15s ease-in-out;
-  --transition-normal: 0.25s ease-in-out;
 }
