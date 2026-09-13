@@ -49,6 +49,12 @@ else:
 
 print(f"Model loaded successfully. Classes: {model.names}")
 
+print("Warming up model with dummy inference to prevent first-request timeout...")
+dummy_img = Image.new('RGB', (640, 640), color='black')
+with torch.inference_mode():
+    model.predict(source=dummy_img, imgsz=640, save=False, verbose=False)
+print("Warmup complete. Ready for real traffic.")
+
 app = FastAPI(
     title="MarineDebrisAI API",
     description="Real YOLO inference backend for side-scan sonar object detection",
