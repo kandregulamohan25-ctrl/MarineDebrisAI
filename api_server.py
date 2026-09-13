@@ -112,14 +112,17 @@ async def run_detection(
             raise HTTPException(status_code=400, detail="Uploaded image file is empty.")
 
         try:
-            original_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            original_image = Image.open(io.BytesIO(image_bytes))
+            
+            # Downscale massive images BEFORE converting to RGB to prevent Out-Of-Memory (OOM) on 512MB RAM Free Tier
+            # Pillow's thumbnail() uses draft mode for JPEGs to drastically save memory
+            MAX_DIM = 1280
+            if original_image.width > MAX_DIM or original_image.height > MAX_DIM:
+                original_image.thumbnail((MAX_DIM, MAX_DIM), Image.Resampling.LANCZOS)
+            
+            original_image = original_image.convert("RGB")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Unable to decode image file: {e}")
-            
-        # Downscale massive images to prevent Out-Of-Memory (OOM) on 512MB RAM Free Tier
-        MAX_DIM = 1280
-        if original_image.width > MAX_DIM or original_image.height > MAX_DIM:
-            original_image.thumbnail((MAX_DIM, MAX_DIM), Image.Resampling.LANCZOS)
 
         original_width, original_height = original_image.size
 
