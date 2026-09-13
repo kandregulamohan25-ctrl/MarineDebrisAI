@@ -20,9 +20,8 @@ import cv2
 import torch
 import gc
 
-# Allow PyTorch to use its default thread count for faster inference
-# We rely on image downscaling (MAX_DIM) to prevent OOM
-# torch.set_num_threads(1)
+# Limit threads to conserve memory on small free-tier servers
+torch.set_num_threads(1)
 cv2.setNumThreads(1)
 
 # Project root
@@ -51,12 +50,6 @@ else:
     raise RuntimeError(f"Model file not found in {MODEL_PATH_PT.parent}")
 
 print(f"Model loaded successfully. Classes: {model.names}")
-
-print("Warming up model with dummy inference to prevent first-request timeout...")
-dummy_img = Image.new('RGB', (640, 640), color='black')
-with torch.inference_mode():
-    model.predict(source=dummy_img, imgsz=640, save=False, verbose=False)
-print("Warmup complete. Ready for real traffic.")
 
 app = FastAPI(
     title="MarineDebrisAI API",
