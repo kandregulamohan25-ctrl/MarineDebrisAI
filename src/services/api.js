@@ -7,8 +7,9 @@
 
 import { validateFootprint } from './geoService.js';
 
-// Environment-aware API base URL (empty for same-origin / Vercel relative path or local Vite proxy)
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+// Environment-aware API base URL
+// Use empty string in local DEV so Vite proxy works, but default to Render backend in PROD
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'https://marinedebrisai.onrender.com')).replace(/\/$/, '');
 
 export function getApiUrl(endpoint) {
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
