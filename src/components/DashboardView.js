@@ -323,11 +323,11 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
         imageBlob: !selectedFile ? blob : null,
         filename: selectedFilename,
         onProgress: (pct, msg) => {
-          statusMsg.textContent = \`[\${pct}%] \${msg.toUpperCase()}\`;
+          statusMsg.textContent = `[${pct}%] ${msg.toUpperCase()}`;
         }
       });
     } catch (err) {
-      alert(\`SYSTEM FAILURE:\\n\${err.message}\`);
+      alert(`SYSTEM FAILURE:\n${err.message}`);
       statusMsg.style.display = 'none';
       runBtn.disabled = false;
       runBtn.textContent = 'INITIATE SCAN';

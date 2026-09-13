@@ -141,8 +141,8 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
   const zoomText = container.querySelector('#zoomText');
 
   const updateZoom = () => {
-    imgWrapper.style.transform = \`scale(\${zoomLevel})\`;
-    zoomText.textContent = \`\${Math.round(zoomLevel * 100)}%\`;
+    imgWrapper.style.transform = `scale(${zoomLevel})`;
+    zoomText.textContent = `${Math.round(zoomLevel * 100)}%`;
   };
 
   container.querySelector('#zoomPlusBtn').addEventListener('click', () => {
@@ -173,7 +173,7 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
   if (!document.getElementById('dashStyles')) {
     const style = document.createElement('style');
     style.id = 'dashStyles';
-    style.innerHTML = \`
+    style.innerHTML = `
       .btn-engage {
         background: var(--color-primary);
         color: var(--bg-dark);
@@ -193,7 +193,7 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
         background: var(--color-primary-hover);
         box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
       }
-    \`;
+    `;
     container.appendChild(style);
   }
 

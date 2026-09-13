@@ -1,15 +1,15 @@
 /**
- * MarineDebrisAI - System Specifications & Engineering Documentation View
+ * MarineDebrisAI - System Transparency Info View
+ * Detailed technical breakdown of the SIH 2026 methodology
  */
 
-import { getCurrentMode, MODES, checkBackendHealth } from '../services/api.js';
+import { checkBackendHealth } from '../services/api.js';
 
 export function renderSystemInfoView() {
   const container = document.createElement('div');
   container.className = 'system-info-view';
-
-  const mode = getCurrentMode();
-  const isDemo = mode === MODES.DEMO;
+  
+  const isDemo = false; // We use live API fallback in PROD now
 
   container.innerHTML = `
     <!-- Top System Header -->

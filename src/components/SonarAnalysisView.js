@@ -216,7 +216,7 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
   const confDisplay = container.querySelector('#sonarConfDisplay');
   slider.addEventListener('input', (e) => {
     confThreshold = parseFloat(e.target.value);
-    confDisplay.textContent = \`\${(confThreshold * 100).toFixed(0)}%\`;
+    confDisplay.textContent = `${(confThreshold * 100).toFixed(0)}%`;
   });
 
   // Buttons
@@ -252,7 +252,7 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
 
   // Pipeline Animation Logic
   const setStage = (stageNum, status) => {
-    const el = container.querySelector(\`#stage-\${stageNum}\`);
+    const el = container.querySelector(`#stage-${stageNum}`);
     if (!el) return;
     if (status === 'active') {
       el.className = 'pipeline-stage active';
@@ -320,7 +320,7 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
     } catch (err) {
       pipelineStatus.textContent = 'ERROR';
       pipelineStatus.style.color = 'var(--color-danger)';
-      alert(\`Analysis Error:\\n\${err.message}\`);
+      alert(`Analysis Error:\n${err.message}`);
     } finally {
       isRunning = false;
       runBtn.disabled = false;
