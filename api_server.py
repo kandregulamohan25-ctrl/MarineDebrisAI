@@ -70,18 +70,10 @@ app.add_middleware(
 @app.get("/api/health")
 @app.get("/health")
 async def health_check():
-    """Health check endpoint confirming model status."""
-    # Handle device attribute which might differ between PT and ONNX
-    device_str = "cpu (onnx)"
-    if hasattr(model, "device"):
-        device_str = str(model.device)
-        
+    """Ultra-lightweight health check for Render proxy."""
     return {
-        "status": "online",
-        "model": ACTIVE_MODEL_PATH.name,
-        "classes": model.names,
-        "device": device_str,
-        "timestamp": time.time()
+        "status": "ok",
+        "service": "MarineDebrisAI API"
     }
 
 
