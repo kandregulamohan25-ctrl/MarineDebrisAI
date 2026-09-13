@@ -33,8 +33,8 @@ from sonar_analysis import validate_detection
 from geotag import footprint_pixel_to_gps, valid_coordinate, pixel_to_meters
 
 # Initialize Model (Load real weights, preferring faster ONNX if available)
-MODEL_PATH_ONNX = BASE_DIR / "best.onnx"
-MODEL_PATH_PT = BASE_DIR / "best.pt"
+MODEL_PATH_ONNX = BASE_DIR / "backend" / "best.onnx"
+MODEL_PATH_PT = BASE_DIR / "backend" / "best.pt"
 
 if MODEL_PATH_ONNX.exists():
     print("Loading optimized ONNX model into memory (3x-5x faster CPU inference)...")
