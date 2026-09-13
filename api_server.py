@@ -39,9 +39,11 @@ MODEL_PATH_PT = BASE_DIR / "backend" / "best.pt"
 if MODEL_PATH_ONNX.exists():
     print("Loading optimized ONNX model into memory (3x-5x faster CPU inference)...")
     model = YOLO(str(MODEL_PATH_ONNX), task='detect')
+    ACTIVE_MODEL_PATH = MODEL_PATH_ONNX
 elif MODEL_PATH_PT.exists():
     print("Loading standard PyTorch YOLO model into memory...")
     model = YOLO(str(MODEL_PATH_PT))
+    ACTIVE_MODEL_PATH = MODEL_PATH_PT
 else:
     raise RuntimeError(f"Model file not found in {MODEL_PATH_PT.parent}")
 
@@ -67,11 +69,16 @@ app.add_middleware(
 @app.get("/health")
 async def health_check():
     """Health check endpoint confirming model status."""
+    # Handle device attribute which might differ between PT and ONNX
+    device_str = "cpu (onnx)"
+    if hasattr(model, "device"):
+        device_str = str(model.device)
+        
     return {
         "status": "online",
-        "model": MODEL_PATH.name,
+        "model": ACTIVE_MODEL_PATH.name,
         "classes": model.names,
-        "device": str(model.device),
+        "device": device_str,
         "timestamp": time.time()
     }
 
