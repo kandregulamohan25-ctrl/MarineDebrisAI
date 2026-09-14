@@ -1,180 +1,229 @@
-/**
- * MarineDebrisAI - DetectionResultsView
- * Naval Mission Control Style
- */
-
 import { downloadJsonReport, downloadCsvReport } from '../services/reportExporter.js';
 import { MissionSession } from '../state/MissionSession.js';
 
 export function renderDetectionResultsView({ scanData, onReanalyze }) {
   const container = document.createElement('div');
   container.className = 'detection-results-view';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.height = '100%';
+  container.style.overflow = 'hidden';
 
-  if (!scanData || !scanData.detections) {
+  if (!scanData || !scanData.detections || scanData.detections.length === 0) {
     container.innerHTML = `
-      <div class="panel" style="text-align: center; padding: 60px 20px; border-color: var(--color-danger); border-style: dashed; background: rgba(255, 51, 102, 0.05);">
+      <div class="panel" style="text-align: center; padding: 60px 20px; border-color: var(--color-danger); border-style: dashed; background: rgba(255, 51, 102, 0.05); margin: 24px;">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="1.5" style="margin: 0 auto 16px;">
           <circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/>
         </svg>
-        <h2 style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--color-danger); margin-bottom: 8px; letter-spacing: 1px;">NO TARGET DATA</h2>
+        <h2 style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--color-danger); margin-bottom: 8px; letter-spacing: 1px;">TARGET REGISTER</h2>
         <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-family: var(--font-mono);">
-          UPLINK REQUIRED: INITIATE SCAN ON OVERVIEW OR WORKSPACE TERMINAL.
+          NO DETECTIONS AVAILABLE<br>
+          Load and analyze a sonar frame to populate the target register.
         </p>
-        <button class="btn-engage" id="goToAnalysisBtn" style="padding: 10px 24px;">SWITCH TO WORKSPACE</button>
+        <button class="btn-engage" id="goToAnalysisBtn" style="padding: 10px 24px;">OPEN SONAR WORKSPACE</button>
       </div>
     `;
-    container.querySelector('#goToAnalysisBtn')?.addEventListener('click', onReanalyze);
+    container.querySelector('#goToAnalysisBtn')?.addEventListener('click', () => {
+       MissionSession.dispatch({type:'SET_TAB', payload:'analysis'});
+    });
     return container;
   }
 
-  const detections = scanData.detections || [];
-  const imageDim = scanData.image_dimensions || { width: 1024, height: 1024 };
+  const detections = scanData.detections;
+  const state = MissionSession.getState();
+  const selectedId = state.selectedDetectionId || detections[0].id;
+  const selectedDet = detections.find(d => d.id === selectedId) || detections[0];
+  const reviewStates = state.reviewStates || {};
+  
+  let unverifiedCount = 0;
+  let confirmedCount = 0;
+  let rejectedCount = 0;
+  
+  detections.forEach(d => {
+    const s = reviewStates[d.id];
+    if (s === 'confirmed') confirmedCount++;
+    else if (s === 'rejected') rejectedCount++;
+    else unverifiedCount++;
+  });
 
-  // Viewer state
-  let zoomLevel = 1.0;
-
-  container.innerHTML = `
+  const html = `
     <!-- Top Action Bar -->
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: var(--bg-panel); border: 1px solid var(--bg-panel-border); border-radius: var(--radius-sm); padding: 16px 24px; box-shadow: var(--shadow-panel); flex-wrap: wrap; gap: 12px; backdrop-filter: var(--glass-blur);">
-      <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; font-family: var(--font-mono);">
-        <span class="nav-badge" style="font-size: 12px; padding: 4px 10px;">${detections.length} TARGET(S)</span>
-        <span style="color: var(--text-muted);">SOURCE:</span>
-        <span style="font-weight: 700; color: var(--color-primary);">${scanData.filename || 'SONAR_STREAM.RAW'}</span>
-        <span style="color: var(--text-muted);">INFERENCE:</span>
-        <span style="color: var(--color-success);">${scanData.inference_seconds ? (scanData.inference_seconds * 1000).toFixed(0) + 'ms' : '150ms'}</span>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--bg-panel); border-bottom: 1px solid var(--bg-panel-border); flex-shrink: 0;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <h2 style="font-family: var(--font-mono); font-size: 18px; color: var(--color-primary); margin: 0; letter-spacing: 1px;">TARGET REGISTER</h2>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Survey contacts identified by the intelligence engine</div>
       </div>
-
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <button class="toolbar-btn" id="btnExportJson">EXPORT JSON</button>
-        <button class="toolbar-btn" id="btnExportCsv">EXPORT CSV</button>
-      </div>
-    </div>
-
-    <!-- Image Viewer Section -->
-    <div class="panel" style="margin-bottom: 24px; padding: 0; overflow: hidden; border-radius: var(--radius-md);">
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(0, 240, 255, 0.05); border-bottom: 1px solid var(--bg-panel-border);">
-        <div style="display: flex; flex-direction: column;">
-          <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--color-primary); letter-spacing: 1px;">ACOUSTIC DETECTION VIEWER</span>
-          <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);">RES: ${imageDim.width}x${imageDim.height} PX</span>
-        </div>
-        <div style="display: flex; gap: 6px;">
-          <button class="toolbar-btn" id="zoomMinusBtn" title="Zoom Out">- ZOOM</button>
-          <span style="font-family: var(--font-mono); font-size: 12px; min-width: 44px; text-align: center; display: flex; align-items: center; justify-content: center;" id="zoomText">100%</span>
-          <button class="toolbar-btn" id="zoomPlusBtn" title="Zoom In">+ ZOOM</button>
-          <button class="toolbar-btn" id="zoomResetBtn" style="color: var(--color-danger); border-color: var(--color-danger-dim);">RESET</button>
-        </div>
-      </div>
-
-      <div style="background: #000; display: flex; align-items: center; justify-content: center; min-height: 400px; max-height: 520px; overflow: hidden; position: relative; background-image: var(--sonar-grid); background-size: 30px 30px;">
-        <div id="resultsCanvasWrapper" style="transition: transform 0.15s ease; display: flex; align-items: center; justify-content: center; transform-origin: center center;">
-          <img id="resultsMainImg" src="${scanData.annotated_image_url || scanData.image_url}" alt="YOLO Annotated Sonar Scan" style="max-width: 100%; max-height: 500px; object-fit: contain; display: block;" />
-        </div>
-        <!-- Reticle -->
-        <div style="position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; border: 1px solid rgba(0, 240, 255, 0.3); transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;"></div>
-        <div style="position: absolute; top: 50%; left: 50%; width: 2px; height: 10px; background: rgba(0, 240, 255, 0.5); transform: translate(-50%, -25px); pointer-events: none;"></div>
-        <div style="position: absolute; top: 50%; left: 50%; width: 2px; height: 10px; background: rgba(0, 240, 255, 0.5); transform: translate(-50%, 15px); pointer-events: none;"></div>
-        <div style="position: absolute; top: 50%; left: 50%; height: 2px; width: 10px; background: rgba(0, 240, 255, 0.5); transform: translate(-25px, -50%); pointer-events: none;"></div>
-        <div style="position: absolute; top: 50%; left: 50%; height: 2px; width: 10px; background: rgba(0, 240, 255, 0.5); transform: translate(15px, -50%); pointer-events: none;"></div>
+      
+      <div style="display: flex; gap: 16px; font-family: var(--font-mono); font-size: 11px; align-items: center;">
+        <div style="display:flex; flex-direction: column; align-items: center;"><span style="color:var(--text-muted)">TOTAL</span><span style="color:#fff; font-size:14px; font-weight:bold;">${detections.length.toString().padStart(2, '0')}</span></div>
+        <div style="width:1px; height:24px; background:rgba(255,255,255,0.1)"></div>
+        <div style="display:flex; flex-direction: column; align-items: center;"><span style="color:var(--text-muted)">UNVERIFIED</span><span style="color:var(--color-primary); font-size:14px; font-weight:bold;">${unverifiedCount.toString().padStart(2, '0')}</span></div>
+        <div style="width:1px; height:24px; background:rgba(255,255,255,0.1)"></div>
+        <div style="display:flex; flex-direction: column; align-items: center;"><span style="color:var(--text-muted)">CONFIRMED</span><span style="color:var(--color-success); font-size:14px; font-weight:bold;">${confirmedCount.toString().padStart(2, '0')}</span></div>
+        <div style="width:1px; height:24px; background:rgba(255,255,255,0.1)"></div>
+        <div style="display:flex; flex-direction: column; align-items: center;"><span style="color:var(--text-muted)">REJECTED</span><span style="color:var(--color-danger); font-size:14px; font-weight:bold;">${rejectedCount.toString().padStart(2, '0')}</span></div>
       </div>
     </div>
 
-    <!-- Detection Table -->
-    <div class="panel" style="padding: 0; overflow: hidden;">
-      <div style="padding: 16px 20px; border-bottom: 1px solid var(--bg-panel-border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3);">
-        <h3 style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--text-main); letter-spacing: 1px;">
-          TARGET DATA LOG
-        </h3>
-        <span style="font-family: var(--font-mono); font-size: 10px; color: var(--color-success); font-weight: 700; text-shadow: var(--shadow-glow-green);">YOLOv11 VERIFIED</span>
-      </div>
-
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12px; text-align: left;">
-          <thead>
-            <tr style="background: rgba(0, 240, 255, 0.05); color: var(--color-primary); border-bottom: 1px solid var(--bg-panel-border);">
-              <th style="padding: 12px 16px; font-weight: 700;">ID</th>
-              <th style="padding: 12px 16px; font-weight: 700;">CLASS</th>
-              <th style="padding: 12px 16px; font-weight: 700;">CONFIDENCE</th>
-              <th style="padding: 12px 16px; font-weight: 700;">GPS COORDINATES</th>
-              <th style="padding: 12px 16px; font-weight: 700;">BOUNDING BOX</th>
-              <th style="padding: 12px 16px; font-weight: 700;">ANOMALY INDEX</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${detections.map(d => {
-              const classType = (d.classification || 'other').toLowerCase();
-              const isSelected = MissionSession.getState().selectedDetectionId === d.id;
-              return `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; cursor: pointer; background: ${isSelected ? 'rgba(0,240,255,0.1)' : 'transparent'};" 
-                    onmouseover="this.style.background='rgba(0, 240, 255, 0.05)'" 
-                    onmouseout="this.style.background='${isSelected ? 'rgba(0,240,255,0.1)' : 'transparent'}'" 
-                    onclick="window.dispatchEvent(new CustomEvent('navToTarget', {detail: '${d.id}'}))">
-                  <td style="padding: 12px 16px; color: var(--text-main);">${d.id}</td>
-                  <td style="padding: 12px 16px;">
-                    <span style="background: var(--color-info-bg); color: var(--color-info); padding: 2px 6px; border-radius: 2px; font-weight: 700; font-size: 10px; border: 1px solid var(--color-info);">
-                      ${d.classification.toUpperCase()}
-                    </span>
-                  </td>
-                  <td style="padding: 12px 16px; color: ${d.confidence >= 80 ? 'var(--color-success)' : 'var(--color-warning)'}; font-weight: 700;">
-                    ${d.confidence.toFixed(1)}%
-                  </td>
-                  <td style="padding: 12px 16px; color: var(--text-secondary);">
-                    ${d.latitude !== null && d.latitude !== undefined ? `${d.latitude.toFixed(5)}, ${d.longitude.toFixed(5)}` : '<span style="color: var(--text-muted);">N/A (LOCAL)</span>'}
-                  </td>
-                  <td style="padding: 12px 16px; color: var(--text-muted); font-size: 11px;">[${d.bounding_box?.x1}, ${d.bounding_box?.y1}, ${d.bounding_box?.x2}, ${d.bounding_box?.y2}]</td>
-                  <td style="padding: 12px 16px; color: var(--text-main);">
-                    ${d.anomaly_score !== null && d.anomaly_score !== undefined ? `<strong>${d.anomaly_score.toFixed(1)}</strong> <span style="color: var(--text-muted);">/100</span>` : '---'}
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-
-            ${detections.length === 0 ? `
-              <tr>
-                <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">
-                  0 TARGETS DETECTED.
-                </td>
+    <!-- Main Content -->
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      
+      <!-- Left: Target Register Table -->
+      <div style="flex: 1; overflow-y: auto; border-right: 1px solid var(--bg-panel-border); background: rgba(0,0,0,0.2); padding: 24px;">
+        <div class="panel" style="padding: 0; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12px; text-align: left;">
+            <thead>
+              <tr style="background: rgba(0, 240, 255, 0.05); color: var(--color-primary); border-bottom: 1px solid var(--bg-panel-border);">
+                <th style="padding: 12px 16px; font-weight: 700;">ID</th>
+                <th style="padding: 12px 16px; font-weight: 700;">CLASSIFICATION</th>
+                <th style="padding: 12px 16px; font-weight: 700;">AI CONF.</th>
+                <th style="padding: 12px 16px; font-weight: 700;">SCORE</th>
+                <th style="padding: 12px 16px; font-weight: 700;">PRIORITY</th>
+                <th style="padding: 12px 16px; font-weight: 700;">REVIEW</th>
               </tr>
-            ` : ''}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              ${detections.map(d => {
+                const s = reviewStates[d.id] || 'unverified';
+                const isSelected = selectedId === d.id;
+                let reviewHtml = '';
+                if (s === 'confirmed') reviewHtml = '<span style="color:var(--color-success); font-weight:bold;">CONF.</span>';
+                else if (s === 'rejected') reviewHtml = '<span style="color:var(--color-danger); font-weight:bold;">REJ.</span>';
+                else reviewHtml = '<span style="color:var(--text-muted);">UNVER.</span>';
+                
+                return `
+                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; cursor: pointer; background: ${isSelected ? 'rgba(0,240,255,0.1)' : 'transparent'};" 
+                      onmouseover="this.style.background='rgba(0, 240, 255, 0.05)'" 
+                      onmouseout="this.style.background='${isSelected ? 'rgba(0,240,255,0.1)' : 'transparent'}'"
+                      data-id="${d.id}" class="target-row">
+                    <td style="padding: 12px 16px; color: var(--text-main); font-weight: ${isSelected ? 'bold' : 'normal'};"><div style="display:flex;align-items:center;gap:8px;">${isSelected ? '<div style="width:6px;height:6px;background:var(--color-primary);border-radius:50%;"></div>' : ''}${d.id}</div></td>
+                    <td style="padding: 12px 16px;">
+                      <span style="background: var(--color-info-bg); color: var(--color-info); padding: 2px 6px; border-radius: 2px; font-weight: 700; font-size: 10px; border: 1px solid var(--color-info);">
+                        ${d.classification.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 16px; color: ${d.confidence >= 80 ? 'var(--color-success)' : 'var(--text-main)'}; font-weight: 700;">
+                      ${d.confidence.toFixed(1)}%
+                    </td>
+                    <td style="padding: 12px 16px; color: var(--text-main);">
+                      ${d.anomaly_score !== null && d.anomaly_score !== undefined ? '<strong>' + d.anomaly_score.toFixed(1) + '</strong> <span style="color: var(--text-muted);">/100</span>' : '---'}
+                    </td>
+                    <td style="padding: 12px 16px; color: var(--text-muted); font-size: 11px;">
+                      UNASSIGNED
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      ${reviewHtml}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <!-- Right: Target Inspector -->
+      <div style="width: 380px; background: rgba(3, 11, 20, 0.95); border-left: 1px solid var(--color-primary-dim); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0;">
+        ${renderInspectorHTML(selectedDet, scanData, reviewStates[selectedId] || 'unverified')}
+      </div>
+
     </div>
   `;
+  container.innerHTML = html;
 
-  // Zoom controls
-  const imgWrapper = container.querySelector('#resultsCanvasWrapper');
-  const zoomText = container.querySelector('#zoomText');
+  // Add event listeners for rows
+  container.querySelectorAll('.target-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.getAttribute('data-id');
+      MissionSession.dispatch({ type: 'SET_SELECTED_TARGET', payload: id });
+    });
+  });
 
-  const updateZoom = () => {
-    imgWrapper.style.transform = `scale(${zoomLevel})`;
-    zoomText.textContent = `${Math.round(zoomLevel * 100)}%`;
+  // Add event listeners for Inspector actions
+  const btnConf = container.querySelector('#btnInspConf');
+  const btnRej = container.querySelector('#btnInspRej');
+  const btnEdit = container.querySelector('#btnInspEdit');
+  const btnSonar = container.querySelector('#btnInspSonar');
+  const btnMap = container.querySelector('#btnInspMap');
+
+  if (btnConf) btnConf.onclick = () => MissionSession.dispatch({ type: 'SET_TARGET_REVIEW', payload: { id: selectedId, status: 'confirmed' } });
+  if (btnRej) btnRej.onclick = () => MissionSession.dispatch({ type: 'SET_TARGET_REVIEW', payload: { id: selectedId, status: 'rejected' } });
+  if (btnEdit) btnEdit.onclick = () => {
+    const newClass = prompt("Edit Classification (Review Layer):", selectedDet.classification);
+    if (newClass && newClass.trim()) {
+      selectedDet.classification = newClass.trim();
+      // To force a re-render
+      MissionSession.dispatch({ type: 'SET_SELECTED_TARGET', payload: selectedId }); 
+    }
   };
+  
+  if (btnSonar) btnSonar.onclick = () => MissionSession.dispatch({ type: 'SET_TAB', payload: 'analysis' });
+  if (btnMap && !btnMap.disabled) btnMap.onclick = () => MissionSession.dispatch({ type: 'SET_TAB', payload: 'map' });
 
-  container.querySelector('#zoomPlusBtn').addEventListener('click', () => {
-    zoomLevel = Math.min(zoomLevel + 0.25, 4.0);
-    updateZoom();
-  });
+  // Handle client-side crop rendering
+  setTimeout(() => {
+    const canvas = container.querySelector('#targetCropCanvas');
+    if (canvas && scanData && selectedDet.bounding_box) {
+      const img = new Image();
+      img.onload = () => {
+        const bb = selectedDet.bounding_box;
+        const ctx = canvas.getContext('2d');
+        const padding = 20;
+        
+        let sx = Math.max(0, bb.x1 - padding);
+        let sy = Math.max(0, bb.y1 - padding);
+        let ex = Math.min(img.width, bb.x2 + padding);
+        let ey = Math.min(img.height, bb.y2 + padding);
+        
+        let sWidth = ex - sx;
+        let sHeight = ey - sy;
 
-  container.querySelector('#zoomMinusBtn').addEventListener('click', () => {
-    zoomLevel = Math.max(zoomLevel - 0.25, 0.25);
-    updateZoom();
-  });
+        // maintain aspect ratio to fit in 340x200 canvas
+        const scale = Math.min(340 / sWidth, 200 / sHeight);
+        const dWidth = sWidth * scale;
+        const dHeight = sHeight * scale;
+        
+        canvas.width = 340;
+        canvas.height = 200;
+        
+        const dx = (340 - dWidth) / 2;
+        const dy = (200 - dHeight) / 2;
+        
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0,0,340,200);
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        
+        // Draw reticle
+        ctx.strokeStyle = '#00F0FF';
+        ctx.lineWidth = 1;
+        
+        const boxX = dx + ((bb.x1 - sx) * scale);
+        const boxY = dy + ((bb.y1 - sy) * scale);
+        const boxW = (bb.x2 - bb.x1) * scale;
+        const boxH = (bb.y2 - bb.y1) * scale;
+        
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+        
+        // Draw corners
+        ctx.beginPath();
+        const cl = 10;
+        // TL
+        ctx.moveTo(boxX, boxY+cl); ctx.lineTo(boxX, boxY); ctx.lineTo(boxX+cl, boxY);
+        // TR
+        ctx.moveTo(boxX+boxW-cl, boxY); ctx.lineTo(boxX+boxW, boxY); ctx.lineTo(boxX+boxW, boxY+cl);
+        // BL
+        ctx.moveTo(boxX, boxY+boxH-cl); ctx.lineTo(boxX, boxY+boxH); ctx.lineTo(boxX+cl, boxY+boxH);
+        // BR
+        ctx.moveTo(boxX+boxW-cl, boxY+boxH); ctx.lineTo(boxX+boxW, boxY+boxH); ctx.lineTo(boxX+boxW, boxY+boxH-cl);
+        ctx.strokeStyle = '#00F0FF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      };
+      img.src = scanData.image_url || scanData.annotated_image_url;
+    }
+  }, 50);
 
-  container.querySelector('#zoomResetBtn').addEventListener('click', () => {
-    zoomLevel = 1.0;
-    updateZoom();
-  });
-
-  // Export handlers
-  container.querySelector('#btnExportJson').addEventListener('click', () => {
-    downloadJsonReport(scanData);
-  });
-
-  container.querySelector('#btnExportCsv').addEventListener('click', () => {
-    downloadCsvReport(scanData);
-  });
-
-  // Add styles for btn-engage locally if not in global yet
+  // Add local styles if needed
   if (!document.getElementById('dashStyles')) {
     const style = document.createElement('style');
     style.id = 'dashStyles';
@@ -203,4 +252,116 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
   }
 
   return container;
+}
+
+function renderInspectorHTML(det, scanData, reviewStatus) {
+  if (!det) {
+    return `
+      <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-family: var(--font-mono);">
+        <div style="font-size: 24px; margin-bottom: 12px;">◎</div>
+        <div style="font-size: 14px; font-weight: bold; color: var(--color-primary); margin-bottom: 8px;">SELECT A TARGET</div>
+        <div style="font-size: 11px; line-height: 1.5;">Choose a contact from the register to inspect its evidence, spatial metadata and review state.</div>
+      </div>
+    `;
+  }
+
+  let badgeHtml = '';
+  if (reviewStatus === 'confirmed') badgeHtml = '<div style="background:rgba(0,255,102,0.1); color:#00FF66; border:1px solid rgba(0,255,102,0.3); padding:4px 8px; font-size:10px; font-weight:bold; letter-spacing:1px; border-radius:2px;">HUMAN VERIFIED</div>';
+  else if (reviewStatus === 'rejected') badgeHtml = '<div style="background:rgba(255,51,102,0.1); color:#FF3366; border:1px solid rgba(255,51,102,0.3); padding:4px 8px; font-size:10px; font-weight:bold; letter-spacing:1px; border-radius:2px;">REJECTED</div>';
+  else badgeHtml = '<div style="background:rgba(0,240,255,0.1); color:#00F0FF; border:1px solid rgba(0,240,255,0.3); padding:4px 8px; font-size:10px; font-weight:bold; letter-spacing:1px; border-radius:2px;">AI DETECTED</div>';
+
+  const hasGps = det.latitude != null;
+
+  return `
+    <div style="padding: 20px; border-bottom: 1px solid var(--color-primary-dim); display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <div style="font-family: var(--font-mono); font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 4px;">${det.id}</div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">SOURCE: ${scanData.filename}</div>
+      </div>
+      ${badgeHtml}
+    </div>
+
+    <!-- Image Crop Area -->
+    <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: #000; position: relative;">
+       <canvas id="targetCropCanvas" width="340" height="200" style="width: 100%; height: auto; border: 1px solid rgba(0,240,255,0.2); border-radius: 2px;"></canvas>
+    </div>
+
+    <div style="padding: 20px; display: flex; flex-direction: column; gap: 24px; font-family: var(--font-mono);">
+      
+      <!-- Classification -->
+      <div>
+        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 6px; letter-spacing: 1px;">CLASSIFICATION</div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 14px; color: #fff;">${det.classification}</div>
+          <button id="btnInspEdit" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); font-size: 10px; padding: 2px 6px; cursor: pointer;">EDIT</button>
+        </div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">RAW: ${det.raw_classification || det.classification}</div>
+      </div>
+
+      <!-- AI Evidence -->
+      <div>
+        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">AI EVIDENCE</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">MODEL CONFIDENCE</div>
+            <div style="font-size: 14px; color: ${det.confidence > 80 ? 'var(--color-success)' : '#fff'};"><span style="font-weight:bold;">${det.confidence.toFixed(1)}</span><span style="font-size:10px;">%</span></div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">FUSED ANOMALY SCORE</div>
+            <div style="font-size: 14px; color: #fff;"><span style="font-weight:bold;">${det.anomaly_score !== null && det.anomaly_score !== undefined ? det.anomaly_score.toFixed(1) : '---'}</span></div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">ACOUSTIC EVIDENCE</div>
+            <div style="font-size: 14px; color: #fff;"><span style="font-weight:bold;">${det.texture_score !== null && det.texture_score !== undefined ? det.texture_score.toFixed(1) : 'N/A'}</span></div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">SEAFLOOR EVIDENCE</div>
+            <div style="font-size: 14px; color: #fff;"><span style="font-weight:bold;">${det.edge_score !== null && det.edge_score !== undefined ? det.edge_score.toFixed(1) : 'N/A'}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spatial Metadata -->
+      <div>
+        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">SPATIAL METADATA</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">GPS LATITUDE</div>
+            <div style="font-size: 11px; color: ${hasGps ? '#fff' : 'var(--color-warning)'};"><span style="font-weight:bold;">${hasGps ? det.latitude.toFixed(5) : 'METADATA REQUIRED'}</span></div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">GPS LONGITUDE</div>
+            <div style="font-size: 11px; color: ${hasGps ? '#fff' : 'var(--color-warning)'};"><span style="font-weight:bold;">${hasGps ? det.longitude.toFixed(5) : 'METADATA REQUIRED'}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dimensions -->
+      <div>
+        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">DIMENSIONS</div>
+        <div style="background: rgba(255,255,255,0.03); padding: 10px; border: 1px solid rgba(255,255,255,0.05);">
+          ${(typeof det.width_m === 'number' && det.scale_source) ? `
+            <div style="font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px;">${det.width_m.toFixed(1)}m × ${det.length_m.toFixed(1)}m</div>
+            <div style="font-size: 9px; color: var(--color-success);">SOURCE: SONAR SCALE METADATA</div>
+          ` : `
+            <div style="font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px;">${det.bounding_box ? (det.bounding_box.x2 - det.bounding_box.x1).toFixed(0) : 0} × ${det.bounding_box ? (det.bounding_box.y2 - det.bounding_box.y1).toFixed(0) : 0} px</div>
+            <div style="font-size: 9px; color: var(--color-warning);">PIXEL DIMENSIONS · PHYSICAL SCALE: METADATA REQUIRED</div>
+          `}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+        <div style="display: flex; gap: 8px;">
+          <button id="btnInspConf" style="flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: bold; background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.3); color: #00FF66; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,255,102,0.2)'" onmouseout="this.style.background='rgba(0,255,102,0.1)'">CONFIRM TARGET</button>
+          <button id="btnInspRej" style="flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: bold; background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.3); color: #FF3366; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,51,102,0.2)'" onmouseout="this.style.background='rgba(255,51,102,0.1)'">REJECT TARGET</button>
+        </div>
+        <button id="btnInspSonar" style="width: 100%; padding: 10px; font-family: var(--font-mono); font-size: 11px; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); color: #00F0FF; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,240,255,0.2)'" onmouseout="this.style.background='rgba(0,240,255,0.1)'">OPEN IN SONAR WORKSPACE</button>
+        <button id="btnInspMap" ${hasGps ? '' : 'disabled'} style="width: 100%; padding: 10px; font-family: var(--font-mono); font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: ${hasGps ? '#fff' : 'var(--text-muted)'}; cursor: ${hasGps ? 'pointer' : 'not-allowed'};">
+           ${hasGps ? 'SHOW ON MAP' : 'GEOLOCATION UNAVAILABLE'}
+        </button>
+      </div>
+
+    </div>
+  `;
 }
