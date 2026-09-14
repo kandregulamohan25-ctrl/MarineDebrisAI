@@ -1,3 +1,4 @@
+import { renderEvidenceFusionPanel } from './EvidenceFusionPanel.js';
 import { downloadJsonReport, downloadCsvReport } from '../services/reportExporter.js';
 import { MissionSession } from '../state/MissionSession.js';
 
@@ -124,7 +125,7 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
 
       <!-- Right: Target Inspector -->
       <div style="width: 380px; background: rgba(3, 11, 20, 0.95); border-left: 1px solid var(--color-primary-dim); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0;">
-        ${renderInspectorHTML(selectedDet, scanData, reviewStates[selectedId] || 'unverified')}
+        ${renderEvidenceFusionPanel(selectedDet, scanData, reviewStates[selectedId] || 'unverified', true)}
       </div>
 
     </div>
@@ -254,114 +255,3 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
   return container;
 }
 
-function renderInspectorHTML(det, scanData, reviewStatus) {
-  if (!det) {
-    return `
-      <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-family: var(--font-mono);">
-        <div style="font-size: 24px; margin-bottom: 12px;">◎</div>
-        <div style="font-size: 14px; font-weight: bold; color: var(--color-primary); margin-bottom: 8px;">SELECT A TARGET</div>
-        <div style="font-size: 11px; line-height: 1.5;">Choose a contact from the register to inspect its evidence, spatial metadata and review state.</div>
-      </div>
-    `;
-  }
-
-  let badgeHtml = '';
-  if (reviewStatus === 'confirmed') badgeHtml = '<div style="background:rgba(0,255,102,0.1); color:#00FF66; border:1px solid rgba(0,255,102,0.3); padding:4px 8px; font-size:10px; font-weight:bold; letter-spacing:1px; border-radius:2px;">HUMAN VERIFIED</div>';
-  else if (reviewStatus === 'rejected') badgeHtml = '<div style="background:rgba(255,51,102,0.1); color:#FF3366; border:1px solid rgba(255,51,102,0.3); padding:4px 8px; font-size:10px; font-weight:bold; letter-spacing:1px; border-radius:2px;">REJECTED</div>';
-  else badgeHtml = '<div style="background:rgba(0,240,255,0.1); color:#00F0FF; border:1px solid rgba(0,240,255,0.3); padding:4px 8px; font-size:10px; font-weight:bold; letter-spacing:1px; border-radius:2px;">AI DETECTED</div>';
-
-  const hasGps = det.latitude != null;
-
-  return `
-    <div style="padding: 20px; border-bottom: 1px solid var(--color-primary-dim); display: flex; justify-content: space-between; align-items: flex-start;">
-      <div>
-        <div style="font-family: var(--font-mono); font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 4px;">${det.id}</div>
-        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">SOURCE: ${scanData.filename}</div>
-      </div>
-      ${badgeHtml}
-    </div>
-
-    <!-- Image Crop Area -->
-    <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: #000; position: relative;">
-       <canvas id="targetCropCanvas" width="340" height="200" style="width: 100%; height: auto; border: 1px solid rgba(0,240,255,0.2); border-radius: 2px;"></canvas>
-    </div>
-
-    <div style="padding: 20px; display: flex; flex-direction: column; gap: 24px; font-family: var(--font-mono);">
-      
-      <!-- Classification -->
-      <div>
-        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 6px; letter-spacing: 1px;">CLASSIFICATION</div>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-size: 14px; color: #fff;">${det.classification}</div>
-          <button id="btnInspEdit" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); font-size: 10px; padding: 2px 6px; cursor: pointer;">EDIT</button>
-        </div>
-        <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">RAW: ${det.raw_classification || det.classification}</div>
-      </div>
-
-      <!-- AI Evidence -->
-      <div>
-        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">AI EVIDENCE</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">MODEL CONFIDENCE</div>
-            <div style="font-size: 14px; color: ${det.confidence > 80 ? 'var(--color-success)' : '#fff'};"><span style="font-weight:bold;">${det.confidence.toFixed(1)}</span><span style="font-size:10px;">%</span></div>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">FUSED ANOMALY SCORE</div>
-            <div style="font-size: 14px; color: #fff;"><span style="font-weight:bold;">${det.anomaly_score !== null && det.anomaly_score !== undefined ? det.anomaly_score.toFixed(1) : '---'}</span></div>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">ACOUSTIC EVIDENCE</div>
-            <div style="font-size: 14px; color: #fff;"><span style="font-weight:bold;">${det.texture_score !== null && det.texture_score !== undefined ? det.texture_score.toFixed(1) : 'N/A'}</span></div>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">SEAFLOOR EVIDENCE</div>
-            <div style="font-size: 14px; color: #fff;"><span style="font-weight:bold;">${det.edge_score !== null && det.edge_score !== undefined ? det.edge_score.toFixed(1) : 'N/A'}</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Spatial Metadata -->
-      <div>
-        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">SPATIAL METADATA</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">GPS LATITUDE</div>
-            <div style="font-size: 11px; color: ${hasGps ? '#fff' : 'var(--color-warning)'};"><span style="font-weight:bold;">${hasGps ? det.latitude.toFixed(5) : 'METADATA REQUIRED'}</span></div>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); padding: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">GPS LONGITUDE</div>
-            <div style="font-size: 11px; color: ${hasGps ? '#fff' : 'var(--color-warning)'};"><span style="font-weight:bold;">${hasGps ? det.longitude.toFixed(5) : 'METADATA REQUIRED'}</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dimensions -->
-      <div>
-        <div style="font-size: 10px; color: var(--color-primary); font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">DIMENSIONS</div>
-        <div style="background: rgba(255,255,255,0.03); padding: 10px; border: 1px solid rgba(255,255,255,0.05);">
-          ${(typeof det.width_m === 'number' && det.scale_source) ? `
-            <div style="font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px;">${det.width_m.toFixed(1)}m × ${det.length_m.toFixed(1)}m</div>
-            <div style="font-size: 9px; color: var(--color-success);">SOURCE: SONAR SCALE METADATA</div>
-          ` : `
-            <div style="font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px;">${det.bounding_box ? (det.bounding_box.x2 - det.bounding_box.x1).toFixed(0) : 0} × ${det.bounding_box ? (det.bounding_box.y2 - det.bounding_box.y1).toFixed(0) : 0} px</div>
-            <div style="font-size: 9px; color: var(--color-warning);">PIXEL DIMENSIONS · PHYSICAL SCALE: METADATA REQUIRED</div>
-          `}
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-        <div style="display: flex; gap: 8px;">
-          <button id="btnInspConf" style="flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: bold; background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.3); color: #00FF66; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,255,102,0.2)'" onmouseout="this.style.background='rgba(0,255,102,0.1)'">CONFIRM TARGET</button>
-          <button id="btnInspRej" style="flex: 1; padding: 10px; font-family: var(--font-mono); font-size: 11px; font-weight: bold; background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.3); color: #FF3366; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,51,102,0.2)'" onmouseout="this.style.background='rgba(255,51,102,0.1)'">REJECT TARGET</button>
-        </div>
-        <button id="btnInspSonar" style="width: 100%; padding: 10px; font-family: var(--font-mono); font-size: 11px; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); color: #00F0FF; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,240,255,0.2)'" onmouseout="this.style.background='rgba(0,240,255,0.1)'">OPEN IN SONAR WORKSPACE</button>
-        <button id="btnInspMap" ${hasGps ? '' : 'disabled'} style="width: 100%; padding: 10px; font-family: var(--font-mono); font-size: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: ${hasGps ? '#fff' : 'var(--text-muted)'}; cursor: ${hasGps ? 'pointer' : 'not-allowed'};">
-           ${hasGps ? 'SHOW ON MAP' : 'GEOLOCATION UNAVAILABLE'}
-        </button>
-      </div>
-
-    </div>
-  `;
-}

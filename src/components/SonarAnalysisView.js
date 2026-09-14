@@ -1,3 +1,4 @@
+import { renderEvidenceFusionPanel } from './EvidenceFusionPanel.js';
 import { runRealSonarAnalysis } from "../services/api.js";
 import { MissionSession } from "../state/MissionSession.js";
 
@@ -285,64 +286,7 @@ const REPLAY_HTML = `
     </div>
   </div>
 
-  <div id="srInspector">
-    <div id="inspHeader">
-      <span class="insp-title" id="inspTId">TARGET INSPECTOR</span>
-      <span class="insp-badge unverified" id="inspBadge">NO DATA</span>
-    </div>
-
-    <div id="inspEmpty">
-      <div class="ei-ico">◎</div>
-      <div class="ei-lbl">NO ANALYSIS LOADED</div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.2);max-width:180px;">
-        Load a survey image and run AI analysis to inspect targets.
-      </div>
-    </div>
-
-    <div id="inspBody" style="display:none;">
-      <div>
-        <div class="is-lbl">Classification</div>
-        <div class="ic-main" id="iClass">---</div>
-        <div class="ic-sub" id="iClassSub"></div>
-      </div>
-      <div>
-        <div class="is-lbl">AI Evidence</div>
-        <div class="mr">
-          <div class="mr-hdr"><span class="mr-name">Model Confidence</span><span class="mr-val" id="mConf">0%</span></div>
-          <div class="mbar"><div class="mfill c" id="mfConf"></div></div>
-        </div>
-        <div class="mr">
-          <div class="mr-hdr"><span class="mr-name">Acoustic Evidence</span><span class="mr-val" id="mAco">--</span></div>
-          <div class="mbar"><div class="mfill a" id="mfAco"></div></div>
-        </div>
-        <div class="mr">
-          <div class="mr-hdr"><span class="mr-name">Seafloor Evidence</span><span class="mr-val" id="mSea">--</span></div>
-          <div class="mbar"><div class="mfill a" id="mfSea"></div></div>
-        </div>
-        <div class="mr" style="margin-bottom:0;">
-          <div class="mr-hdr"><span class="mr-name" style="color:#00F0FF;">Fused Anomaly Score</span><span class="mr-val" id="mAno" style="color:#00F0FF;">0%</span></div>
-          <div class="mbar" style="height:8px;"><div class="mfill c" id="mfAno"></div></div>
-        </div>
-      </div>
-      <div>
-        <div class="is-lbl">Spatial Metadata</div>
-        <div class="meta-r"><span class="ml">GPS LATITUDE</span><span class="mv na" id="iLat">METADATA REQUIRED</span></div>
-        <div class="meta-r"><span class="ml">GPS LONGITUDE</span><span class="mv na" id="iLon">METADATA REQUIRED</span></div>
-        <div class="meta-r"><span class="ml">BBOX (px)</span><span class="mv" id="iBbox">---</span></div>
-        <div class="meta-r" style="border:none;"><span class="ml">DIMENSIONS</span><span class="mv na" id="iDim">METADATA REQUIRED</span></div>
-      </div>
-      <div>
-        <div class="is-lbl">Review Actions</div>
-        <div class="act-row" style="margin-bottom:8px;">
-          <button class="btn-conf" id="btnConf">✓ CONFIRM</button>
-          <button class="btn-rej" id="btnRej">✕ REJECT</button>
-        </div>
-        <button class="btn-edit" id="btnEdit">EDIT CLASSIFICATION</button>
-      </div>
-    </div>
-
-    <button id="srRunBtn">RUN AI ANALYSIS</button>
-  </div>
+  <div id="srInspector"><button id="srRunBtn">RUN AI ANALYSIS</button></div>
 </div>
 
 <div id="srModal">
@@ -532,12 +476,13 @@ function loadSurvey(c, url, filename, onAnalysisComplete) {
   c.querySelector("#tlTgt").textContent  = "0 TARGETS";
   c.querySelector("#tlEvts").innerHTML   = "";
   c.querySelector("#srDetLayer").innerHTML = "";
-  c.querySelector("#inspBody").style.display  = "none";
-  c.querySelector("#inspEmpty").style.display = "flex";
-  c.querySelector("#inspEmpty").innerHTML = `<div class="ei-ico">◎</div><div class="ei-lbl">NO ANALYSIS LOADED</div><div style="font-size:10px;color:rgba(255,255,255,0.2);max-width:180px;">Load a survey image and run AI analysis to inspect targets.</div>`;
-  c.querySelector("#inspTId").textContent  = "TARGET INSPECTOR";
-  c.querySelector("#inspBadge").textContent = "NO DATA";
-  c.querySelector("#inspBadge").className   = "insp-badge unverified";
+  c.querySelector("#srInspector").innerHTML = `\n      <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-family: var(--font-mono);">\n        <div style="font-size: 24px; margin-bottom: 12px; color: var(--color-primary);">◎</div>\n        <div style="font-size: 14px; font-weight: bold; color: var(--color-primary); margin-bottom: 8px;">NO ANALYSIS LOADED</div>\n        <div style="font-size: 11px; line-height: 1.5;">Load a survey image and run AI analysis to inspect targets.</div>\n      </div>\n      <button id="srRunBtn">RUN AI ANALYSIS</button>\n    `;
+    c.querySelector("#srRunBtn").onclick = () => runAnalysis(c, null);
+  
+  
+  
+  
+  
 
   // Reset view toggles
   c.querySelector("#vtbOrig").classList.add("active");
@@ -714,9 +659,9 @@ function presentResults(c, data) {
   c.querySelector("#tlEvts").innerHTML = "";
 
   if (count === 0) {
-    c.querySelector("#inspBody").style.display  = "none";
-    c.querySelector("#inspEmpty").style.display = "flex";
-    c.querySelector("#inspEmpty").innerHTML = `<div style="color:#00FF66;font-size:12px;letter-spacing:1px;text-align:center;padding:20px;">✓ NO ANOMALIES DETECTED<br><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:6px;display:block;">Clean survey frame</span></div>`;
+    
+    
+    
     return;
   }
 
@@ -795,86 +740,49 @@ function selectTarget(c, idx, data) {
 
 function populateInspector(c, det, idx, data) {
   const insp = c.querySelector("#srInspector");
-  c.querySelector("#inspEmpty").style.display = "none";
-  c.querySelector("#inspBody").style.display  = "flex";
-
-  // Stage 8: Inspector slide-in
+  const savedState = _reviewStates[det.id || idx];
+  
+  // Render Evidence Fusion Panel without the canvas crop (showCrop = false)
+  insp.innerHTML = renderEvidenceFusionPanel(det, data, savedState, false) + '<div style="padding: 20px;"><button id="srRunBtn">RUN AI ANALYSIS</button></div>';
+  
+  // Need to re-bind the run button since we wiped innerHTML
+  const rb = c.querySelector("#srRunBtn");
+  if (rb) rb.onclick = () => runAnalysis(c, null);
+  
+  // Slide in effect
   insp.classList.add("hidden");
   requestAnimationFrame(() => {
     insp.classList.remove("hidden");
   });
 
-  // Stage 9: AI DETECTED / UNVERIFIED as default state (session only)
-  const savedState = _reviewStates[det.id || idx];
-  const badgeState = savedState || "ai-detected";
-  const badgeText  = savedState === "confirmed" ? "HUMAN VERIFIED"
-                   : savedState === "rejected"  ? "REJECTED"
-                   : "AI DETECTED";
+  // Bind Actions
+  const btnConf = c.querySelector("#btnInspConf");
+  const btnRej = c.querySelector("#btnInspRej");
+  const btnEdit = c.querySelector("#btnInspEdit");
+  const btnSonar = c.querySelector("#btnInspSonar"); 
+  const btnMap = c.querySelector("#btnInspMap");
 
-  c.querySelector("#inspTId").textContent   = det.id || `TARGET T${String(idx + 1).padStart(2, "0")}`;
-  c.querySelector("#inspBadge").textContent = badgeText;
-  c.querySelector("#inspBadge").className   = `insp-badge ${savedState === "confirmed" ? "human-verified" : savedState === "rejected" ? "rejected" : "ai-detected"}`;
-
-  const parts = (det.classification || "Unknown Anomaly").split("(");
-  c.querySelector("#iClass").textContent    = parts[0].trim();
-  c.querySelector("#iClassSub").textContent = parts[1] ? parts[1].replace(")", "").trim() : (det.raw_classification || "");
-
-  // Stages 4–7: Meter animations with stagger
-  setTimeout(() => setMeter(c, "mfConf", "mConf", det.confidence,    "%"), 0);
-  setTimeout(() => setMeter(c, "mfAco",  "mAco",  det.texture_score, ""), 150);
-  setTimeout(() => setMeter(c, "mfSea",  "mSea",  det.edge_score,    ""), 300);
-  setTimeout(() => setMeter(c, "mfAno",  "mAno",  det.anomaly_score, "%"), 450);
-
-  // GPS
-  const hasLat = det.latitude  != null;
-  const hasLon = det.longitude != null;
-  const latEl  = c.querySelector("#iLat");
-  const lonEl  = c.querySelector("#iLon");
-  latEl.textContent = hasLat ? det.latitude.toFixed(5)  : "METADATA REQUIRED";
-  latEl.className   = `mv${hasLat ? "" : " na"}`;
-  lonEl.textContent = hasLon ? det.longitude.toFixed(5) : "METADATA REQUIRED";
-  lonEl.className   = `mv${hasLon ? "" : " na"}`;
-
-  // Bbox
-  const bb = det.bounding_box;
-  c.querySelector("#iBbox").textContent = bb
-    ? `[${Math.round(bb.x1)}, ${Math.round(bb.y1)}, ${Math.round(bb.x2)}, ${Math.round(bb.y2)}]`
-    : "---";
-
-  // Dimensions — honest: physical only if sonar-scale metadata confirmed, otherwise pixel dims
-  const dimEl  = c.querySelector("#iDim");
-  const hasW   = typeof det.width_m  === "number";
-  const hasL   = typeof det.length_m === "number";
-  const hasPx  = bb;
-  if (hasW && hasL && det.scale_source) {
-    dimEl.textContent = `${det.width_m.toFixed(1)}m × ${det.length_m.toFixed(1)}m`;
-    dimEl.className   = "mv";
-    // Add provenance note
-    const note = document.createElement("div");
-    note.className = "dim-note";
-    note.textContent = "SOURCE: SONAR SCALE METADATA";
-    dimEl.parentElement.appendChild(note);
-  } else if (hasPx) {
-    const pxW = Math.round(bb.x2 - bb.x1);
-    const pxH = Math.round(bb.y2 - bb.y1);
-    dimEl.textContent = `${pxW} × ${pxH} px`;
-    dimEl.className   = "mv";
-    const note = document.createElement("div");
-    note.className = "dim-note";
-    note.textContent = "PIXEL DIMENSIONS  ·  PHYSICAL SCALE: METADATA REQUIRED";
-    dimEl.parentElement.appendChild(note);
-  } else {
-    dimEl.textContent = "METADATA REQUIRED";
-    dimEl.className   = "mv na";
-  }
-
-  // Review buttons
-  c.querySelector("#btnConf").onclick = () => applyReview(c, det, idx, "confirmed");
-  c.querySelector("#btnRej").onclick  = () => applyReview(c, det, idx, "rejected");
-  c.querySelector("#btnEdit").onclick = () => {
+  if (btnConf) btnConf.onclick = () => applyReview(c, det, idx, "confirmed");
+  if (btnRej) btnRej.onclick = () => applyReview(c, det, idx, "rejected");
+  if (btnEdit) btnEdit.onclick = () => {
     const newCls = prompt("New classification:", det.classification || "");
-    if (newCls?.trim()) { det.classification = newCls.trim(); populateInspector(c, det, idx, data); }
+    if (newCls?.trim()) { 
+      det.classification = newCls.trim(); 
+      // Re-populate to reflect changes
+      populateInspector(c, det, idx, data);
+      MissionSession.dispatch({ type: 'SET_SELECTED_TARGET', payload: det.id || idx });
+    }
   };
+  if (btnSonar) {
+     btnSonar.textContent = "FLASH TARGET";
+     btnSonar.onclick = () => {
+       const b = c.querySelectorAll(".det-box")[idx];
+       if (b) {
+         b.style.transform = "scale(1.2)";
+         setTimeout(() => b.style.transform = "", 200);
+       }
+     };
+  }
 }
 
 function setMeter(c, fillId, valId, val, unit) {
