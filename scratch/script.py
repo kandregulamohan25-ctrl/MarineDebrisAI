@@ -1,3 +1,7 @@
+
+import os
+
+js_code = """
 import { runRealSonarAnalysis } from "../services/api.js";
 
 export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete }) {
@@ -251,7 +255,7 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
         <div class="sonar-radar" id="radarAnim"></div>
         
         <div style="font-size: 14px; text-align: center; color: var(--color-primary); margin: 10px 0; font-weight: bold;" id="modalStatusText">
-          AI ENGINE PROCESSING...
+          AI ENGINE PROCESSING
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 4px;" id="stagesContainer">
@@ -267,7 +271,6 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
           <span style="font-size: 11px; color: rgba(255,255,255,0.5);">T+ <span id="elapsedTime">0.0</span>s</span>
-          <button class="btn-action" style="max-width: 100px;" id="btnCancelAnalysis">CANCEL</button>
         </div>
       </div>
     </div>
@@ -331,20 +334,20 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
     // Check dimensions on load
     const img = new Image();
     img.onload = () => {
-        container.querySelector("#headerRes").textContent = `RES: ${img.width}x${img.height} PX`;
-        container.querySelector("#modalRes").textContent = `DIMENSIONS: ${img.width}x${img.height} PX`;
+        container.querySelector("#headerRes").textContent = \`RES: \${img.width}x\${img.height} PX\`;
+        container.querySelector("#modalRes").textContent = \`DIMENSIONS: \${img.width}x\${img.height} PX\`;
     };
     img.src = url;
   }
   
   // Zoom Controls
-  container.querySelector("#btnZoomIn").addEventListener("click", () => { zoomLvl = Math.min(zoomLvl + 0.5, 4); imgWrapper.style.transform = `scale(${zoomLvl})`; });
-  container.querySelector("#btnZoomOut").addEventListener("click", () => { zoomLvl = Math.max(zoomLvl - 0.5, 0.5); imgWrapper.style.transform = `scale(${zoomLvl})`; });
-  container.querySelector("#btnFit").addEventListener("click", () => { zoomLvl = 1.0; imgWrapper.style.transform = `scale(1)`; });
+  container.querySelector("#btnZoomIn").addEventListener("click", () => { zoomLvl = Math.min(zoomLvl + 0.5, 4); imgWrapper.style.transform = \`scale(\${zoomLvl})\`; });
+  container.querySelector("#btnZoomOut").addEventListener("click", () => { zoomLvl = Math.max(zoomLvl - 0.5, 0.5); imgWrapper.style.transform = \`scale(\${zoomLvl})\`; });
+  container.querySelector("#btnFit").addEventListener("click", () => { zoomLvl = 1.0; imgWrapper.style.transform = \`scale(1)\`; });
 
   // Modal Stage Logic
   const setStage = (num, status) => {
-    const el = container.querySelector(`#stg${num}`);
+    const el = container.querySelector(\`#stg\${num}\`);
     if (!el) return;
     const stat = el.querySelector(".status");
     if (status === "active") {
@@ -418,10 +421,10 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
         
         if (result.has_gps) {
             setStage(7, "done");
-            container.querySelector("#geoData").innerHTML = `<span style="color: var(--color-success);">GEOREFERENCED</span><br/>LAT: ${result.footprint.latitude_min.toFixed(4)}<br/>LON: ${result.footprint.longitude_min.toFixed(4)}`;
+            container.querySelector("#geoData").innerHTML = \`<span style="color: var(--color-success);">GEOREFERENCED</span><br/>LAT: \${result.footprint.latitude_min.toFixed(4)}<br/>LON: \${result.footprint.longitude_min.toFixed(4)}\`;
         } else {
             setStage(7, "req");
-            container.querySelector("#geoData").innerHTML = `METADATA REQUIRED`;
+            container.querySelector("#geoData").innerHTML = \`METADATA REQUIRED\`;
             container.querySelector("#btnUploadNav").style.display = "block";
         }
         setStage(8, "done");
@@ -441,11 +444,9 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
         clearInterval(timerInterval);
         container.querySelector("#modalStatusText").textContent = "SYSTEM FAILURE";
         container.querySelector("#modalStatusText").style.color = "var(--color-danger)";
-        alert(`Analysis Error:\n${err.message}`);
-        setTimeout(() => {
-            modal.classList.remove("active");
-            radarAnim.classList.remove("active");
-        }, 2000);
+        alert(\`Analysis Error:\\n\${err.message}\`);
+        modal.classList.remove("active");
+        radarAnim.classList.remove("active");
     } finally {
         isRunning = false;
         btnRunAnalysis.disabled = false;
@@ -485,10 +486,10 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
       const rx2 = (hero.bounding_box.x2 / imgW) * 100;
       const ry2 = (hero.bounding_box.y2 / imgH) * 100;
       
-      rect.style.left = `${rx1}%`;
-      rect.style.top = `${ry1}%`;
-      rect.style.width = `${rx2 - rx1}%`;
-      rect.style.height = `${ry2 - ry1}%`;
+      rect.style.left = \`\${rx1}%\`;
+      rect.style.top = \`\${ry1}%\`;
+      rect.style.width = \`\${rx2 - rx1}%\`;
+      rect.style.height = \`\${ry2 - ry1}%\`;
       
       const label = document.createElement("div");
       label.className = "detection-label";
@@ -519,17 +520,14 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
       setTimeout(() => { animateMeter("meterConf", "valConf", conf); }, 600);
       setTimeout(() => { animateMeter("meterAcoustic", "valAcoustic", acoustic); }, 800);
       setTimeout(() => { animateMeter("meterSeafloor", "valSeafloor", seafloor); }, 1000);
-      setTimeout(() => { 
-        animateMeter("meterAnomaly", "valAnomaly", anomaly); 
-        if (onAnalysisComplete) onAnalysisComplete(data);
-      }, 1200);
+      setTimeout(() => { animateMeter("meterAnomaly", "valAnomaly", anomaly); }, 1200);
   }
   
   function animateMeter(meterId, valId, targetVal) {
-      const meter = container.querySelector(`#${meterId}`);
-      const valText = container.querySelector(`#${valId}`);
+      const meter = container.querySelector(\`#\${meterId}\`);
+      const valText = container.querySelector(\`#\${valId}\`);
       
-      meter.style.width = `${targetVal}%`;
+      meter.style.width = \`\${targetVal}%\`;
       
       let current = 0;
       const step = targetVal / 30; // 30 frames
@@ -539,9 +537,14 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
               current = targetVal;
               clearInterval(interval);
           }
-          valText.textContent = `${current.toFixed(1)}%`;
+          valText.textContent = \`\${current.toFixed(1)}%\`;
       }, 30);
   }
 
   return container;
 }
+"""
+
+with open("src/components/SonarAnalysisView.js", "w", encoding="utf-8") as f:
+    f.write(js_code)
+

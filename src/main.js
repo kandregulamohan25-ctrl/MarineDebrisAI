@@ -170,8 +170,7 @@ function renderCurrentTab() {
         currentAnalysis: state.currentAnalysis,
         onAnalysisComplete: (realResult) => {
           state.currentAnalysis = realResult;
-          renderAppShell();
-          handleTabSelect('results');
+          // renderAppShell(); // We let the view update itself via the cinematic reveal
         }
       }));
       break;
