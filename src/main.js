@@ -124,54 +124,42 @@ function handleRunDetectionFromDashboard(options) {
   // This will be replaced by the direct MissionSession actions inside DashboardView
 }
 
+const tabCache = {};
+
 function renderCurrentTab(viewport, state) {
   viewport.innerHTML = '';
-
-  switch (state.activeTab) {
-    case 'dashboard':
-      viewport.appendChild(renderDashboardView({
-        currentAnalysis: state.analysisResult
-      }));
-      break;
-
-    case 'analysis':
-      // The SonarWorkspace will now pull from MissionSession
-      viewport.appendChild(renderSonarAnalysisView({
-        currentAnalysis: state.analysisResult
-      }));
-      break;
-
-    case 'results':
-      viewport.appendChild(renderDetectionResultsView({
-        scanData: state.analysisResult
-      }));
-      break;
-
-    case 'map':
-      viewport.appendChild(renderGeospatialMapView({
-        scanData: state.analysisResult
-      }));
-      break;
-
-    case 'reports':
-      viewport.appendChild(renderReportsView({
-        scanData: state.analysisResult
-      }));
-      break;
-
-    case 'system':
-      viewport.appendChild(renderSystemInfoView());
-      break;
-
-    default:
-      viewport.appendChild(renderDashboardView({
-        currentAnalysis: state.analysisResult
-      }));
+  
+  if (tabCache.lastAnalysis !== state.analysisResult) {
+      Object.keys(tabCache).forEach(k => { if(k !== 'lastAnalysis') delete tabCache[k]; });
+      tabCache.lastAnalysis = state.analysisResult;
+  }
+  
+  const cacheKey = state.activeTab;
+  
+  if (!tabCache[cacheKey]) {
+      switch (state.activeTab) {
+        case 'dashboard':
+          tabCache[cacheKey] = renderDashboardView({ currentAnalysis: state.analysisResult });
+          break;
+        case 'analysis':
+          tabCache[cacheKey] = renderSonarAnalysisView({ currentAnalysis: state.analysisResult });
+          break;
+        case 'results':
+          tabCache[cacheKey] = renderDetectionResultsView({ scanData: state.analysisResult, onReanalyze: () => MissionSession.dispatch({ type: 'SET_TAB', payload: 'analysis' }) });
+          break;
+        case 'map':
+          tabCache[cacheKey] = renderGeospatialMapView({ scanData: state.analysisResult });
+          break;
+        case 'reports':
+          tabCache[cacheKey] = renderReportsView({ scanData: state.analysisResult });
+          break;
+        case 'system':
+          tabCache[cacheKey] = renderSystemInfoView();
+          break;
+      }
+  }
+  
+  if (tabCache[cacheKey]) {
+     viewport.appendChild(tabCache[cacheKey]);
   }
 }
-
-// Because MissionSession.subscribe triggers renderAppShell, we must debounce or wrap it carefully
-// Actually, let's remove the global subscription and only trigger renderAppShell on SET_TAB, SET_FRAME, SET_ANALYSIS_RESULT, START_DEMO, etc.
-
-
-document.addEventListener('DOMContentLoaded', initApp);

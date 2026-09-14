@@ -30,15 +30,17 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
     return container;
   }
 
-  const detections = scanData.detections;
-  const state = MissionSession.getState();
-  const selectedId = state.selectedDetectionId || detections[0].id;
-  const selectedDet = detections.find(d => d.id === selectedId) || detections[0];
-  const reviewStates = state.reviewStates || {};
-  
-  let unverifiedCount = 0;
-  let confirmedCount = 0;
-  let rejectedCount = 0;
+  let detections = scanData.detections;
+
+  function updateState() {
+    const state = MissionSession.getState();
+    const selectedId = state.selectedDetectionId || detections[0].id;
+    const selectedDet = detections.find(d => d.id === selectedId) || detections[0];
+    const reviewStates = state.reviewStates || {};
+    
+    let unverifiedCount = 0;
+    let confirmedCount = 0;
+    let rejectedCount = 0;
   
   detections.forEach(d => {
     const s = reviewStates[d.id];
@@ -220,9 +222,23 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
         ctx.lineWidth = 2;
         ctx.stroke();
       };
-      img.src = scanData.image_url || scanData.annotated_image_url;
+      // For crop source, use the original image or annotated image
+      img.src = scanData.annotated_image_url || scanData.image_url;
     }
-  }, 50);
+  }, 0);
+  } // end updateState()
+  
+  updateState();
+
+  // Internal subscription
+  const unsub = MissionSession.subscribe((newState) => {
+    if (newState.activeTab === 'results') {
+      updateState();
+    }
+  });
+
+  // Clean up
+  container.addEventListener('DOMNodeRemovedFromDocument', () => unsub());
 
   // Add local styles if needed
   if (!document.getElementById('dashStyles')) {
