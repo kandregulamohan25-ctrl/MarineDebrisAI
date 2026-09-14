@@ -117,7 +117,7 @@ async def run_detection(
             
             # Downscale massive images BEFORE converting to RGB to prevent Out-Of-Memory (OOM) on 512MB RAM Free Tier
             # Pillow's thumbnail() uses draft mode for JPEGs to drastically save memory
-            MAX_DIM = 1280
+            MAX_DIM = 640
             if original_image.width > MAX_DIM or original_image.height > MAX_DIM:
                 original_image.thumbnail((MAX_DIM, MAX_DIM), Image.Resampling.LANCZOS)
             
@@ -127,9 +127,15 @@ async def run_detection(
 
         original_width, original_height = original_image.size
 
+        # Aggressive memory cleanup before intensive operations
+        gc.collect()
+
         # 1. Preprocess image
         start_time = time.perf_counter()
         processed_image, preprocessing_analysis = preprocess_with_analysis(original_image)
+
+        # Free memory from preprocessing before AI inference
+        gc.collect()
 
         # 2. YOLO inference
         infer_start = time.perf_counter()
