@@ -67,6 +67,15 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root():
+    """Friendly root endpoint to indicate the service is running."""
+    return {
+        "message": "MarineDebrisAI Backend is running.",
+        "status": "online",
+        "endpoints": ["/api/health", "/api/detect"]
+    }
+
 @app.get("/api/health")
 @app.get("/health")
 async def health_check():
