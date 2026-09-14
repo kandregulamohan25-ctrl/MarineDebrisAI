@@ -131,25 +131,75 @@ const REPLAY_CSS = `
 .btn-outline{padding:11px 28px;font-size:12px;font-weight:600;letter-spacing:1px;background:transparent;color:#00F0FF;border:1px solid rgba(0,240,255,0.4);cursor:pointer;transition:all 0.2s;}
 .btn-outline:hover{background:rgba(0,240,255,0.08);}
 /* MODAL */
-#srModal{position:absolute;inset:0;z-index:100;background:rgba(3,11,20,0.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;}
+#srModal{position:absolute;inset:0;z-index:100;background:rgba(3,11,20,0.93);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;}
 #srModal.active{display:flex;}
-.modal-box{width:540px;background:#0A192F;border:1px solid rgba(0,240,255,0.2);border-top:3px solid #00F0FF;padding:28px;display:flex;flex-direction:column;gap:14px;}
-.m-title{font-size:17px;font-weight:700;letter-spacing:2px;color:#00F0FF;margin:0;}
-.m-sub{font-size:11px;color:rgba(255,255,255,0.5);line-height:1.7;}
-.radar-ring{width:110px;height:110px;border-radius:50%;margin:0 auto;border:1px solid rgba(0,240,255,0.2);position:relative;overflow:hidden;}
-.radar-ring::before{content:"";position:absolute;top:50%;left:50%;width:50%;height:2px;background:linear-gradient(to right,#00F0FF,transparent);transform-origin:0 50%;animation:radar 2s linear infinite;}
-.radar-ring::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(0,240,255,0.06),transparent 70%);}
-@keyframes radar{0%{transform:translateY(-50%) rotate(0deg);}100%{transform:translateY(-50%) rotate(360deg);}}
-.m-status{text-align:center;font-size:13px;font-weight:700;letter-spacing:1px;color:#00F0FF;}
-.stg-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:rgba(255,255,255,0.4);border-bottom:1px solid rgba(255,255,255,0.05);}
-.stg-row.active{color:#00F0FF;}.stg-row.done{color:#00FF66;}.stg-row.req{color:#FFB000;}
-.stg-st{font-family:'Courier New',monospace;font-size:11px;}
+.modal-box{width:580px;max-width:96vw;background:#070F1D;border:1px solid rgba(0,240,255,0.2);border-top:3px solid #00F0FF;padding:28px 32px;display:flex;flex-direction:column;gap:16px;box-shadow:0 0 60px rgba(0,240,255,0.08);}
+.m-title{font-size:18px;font-weight:700;letter-spacing:3px;color:#00F0FF;margin:0;}
+.m-sub{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.8;}
+/* SONAR SWEEP — enhanced */
+.sonar-sweep-wrap{position:relative;width:140px;height:140px;margin:4px auto;flex-shrink:0;}
+.sonar-sweep{width:100%;height:100%;border-radius:50%;position:relative;overflow:hidden;
+  border:1px solid rgba(0,240,255,0.18);
+  background:radial-gradient(circle at center,rgba(0,240,255,0.04),transparent 70%);}
+.sonar-grid-h,.sonar-grid-v{position:absolute;background:rgba(0,240,255,0.08);}
+.sonar-grid-h{width:100%;height:1px;top:50%;left:0;}
+.sonar-grid-v{height:100%;width:1px;left:50%;top:0;}
+.sonar-ring-1,.sonar-ring-2{position:absolute;border-radius:50%;border:1px solid rgba(0,240,255,0.12);}
+.sonar-ring-1{width:60%;height:60%;top:20%;left:20%;}
+.sonar-ring-2{width:85%;height:85%;top:7.5%;left:7.5%;}
+.sonar-sweep-arm{position:absolute;top:50%;left:50%;width:50%;height:2px;transform-origin:0 50%;animation:sweep 2.5s linear infinite;background:linear-gradient(to right,#00F0FF,transparent);box-shadow:0 0 8px rgba(0,240,255,0.6);}
+@keyframes sweep{0%{transform:translateY(-50%) rotate(0deg);}100%{transform:translateY(-50%) rotate(360deg);}}
+.sonar-fade{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(0,240,255,0.06) 0deg,transparent 90deg,transparent 360deg);animation:sweep-fade 2.5s linear infinite;}
+@keyframes sweep-fade{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.sonar-center-dot{position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:#00F0FF;transform:translate(-50%,-50%);box-shadow:0 0 8px #00F0FF;}
+/* META CARDS inside modal */
+.modal-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.mm-card{background:rgba(0,240,255,0.04);border:1px solid rgba(0,240,255,0.12);padding:10px 12px;}
+.mm-label{font-size:9px;letter-spacing:2px;color:rgba(0,240,255,0.5);font-weight:700;margin-bottom:4px;}
+.mm-val{font-family:'Courier New',monospace;font-size:12px;color:#fff;}
+.mm-val.processing{color:#00F0FF;animation:pulse-text 1.4s ease-in-out infinite;}
+@keyframes pulse-text{0%,100%{opacity:1;}50%{opacity:0.4;}}
+/* STAGES */
+.stg-row{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;font-size:11px;color:rgba(255,255,255,0.35);border-left:2px solid transparent;transition:all 0.3s ease;}
+.stg-row.active{color:#00F0FF;border-left-color:#00F0FF;background:rgba(0,240,255,0.04);animation:stg-pulse 1.6s ease-in-out infinite;}
+@keyframes stg-pulse{0%,100%{background:rgba(0,240,255,0.04);}50%{background:rgba(0,240,255,0.09);}}
+.stg-row.done{color:#00FF66;border-left-color:#00FF66;}
+.stg-row.req{color:#FFB000;border-left-color:#FFB000;}
+.stg-st{font-family:'Courier New',monospace;font-size:10px;}
+/* ERROR STATE */
+.m-error{background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.25);padding:14px;text-align:center;display:none;}
+.m-error.show{display:block;}
+.m-error-title{font-size:13px;font-weight:700;color:#FF3366;letter-spacing:1px;margin-bottom:4px;}
+.m-error-sub{font-size:11px;color:rgba(255,255,255,0.5);}
+.btn-retry{margin-top:12px;padding:8px 20px;font-size:11px;font-weight:700;letter-spacing:1px;background:rgba(255,51,102,0.15);border:1px solid rgba(255,51,102,0.4);color:#FF3366;cursor:pointer;}
+.btn-retry:hover{background:rgba(255,51,102,0.3);}
+/* TARGET ACQUIRED FLASH */
+.ta-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(3,11,20,0.96);z-index:200;opacity:0;transition:opacity 0.4s;pointer-events:none;}
+.ta-flash.show{opacity:1;pointer-events:all;}
+.ta-card{text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.ta-label{font-size:11px;letter-spacing:4px;color:#00F0FF;font-weight:700;}
+.ta-id{font-size:32px;font-weight:700;color:#fff;letter-spacing:2px;}
+.ta-class{font-size:14px;color:#FFB000;letter-spacing:1px;}
+.ta-sub{font-size:11px;color:rgba(255,255,255,0.45);}
+.ta-status{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:2px;background:rgba(255,176,0,0.12);border:1px solid rgba(255,176,0,0.3);color:#FFB000;padding:4px 14px;}
+.ta-ring{width:80px;height:80px;border-radius:50%;border:2px solid #FFB000;animation:ta-expand 1.2s ease-out forwards;position:absolute;}
+@keyframes ta-expand{0%{transform:scale(0.5);opacity:1;}100%{transform:scale(3);opacity:0;}}
+/* m-timer */
+.m-timer-row{display:flex;justify-content:space-between;align-items:center;}
 .m-timer{font-family:'Courier New',monospace;font-size:11px;color:rgba(255,255,255,0.4);}
 /* SMALL UTIL */
 .sb-btn{padding:4px 10px;font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.65);cursor:pointer;transition:all 0.15s;}
 .sb-btn:hover{background:rgba(0,240,255,0.08);color:#00F0FF;border-color:rgba(0,240,255,0.3);}
 .demo-btn{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;background:rgba(255,176,0,0.1);border:1px solid rgba(255,176,0,0.3);color:#FFB000;cursor:pointer;}
 .demo-btn:hover{background:rgba(255,176,0,0.2);}
+/* INSPECTOR REVEAL */
+#srInspector{transition:opacity 0.5s ease,transform 0.5s ease;}
+#srInspector.hidden{opacity:0;transform:translateX(20px);}
+/* INSP BADGE VARIANTS */
+.insp-badge.ai-detected{background:rgba(255,176,0,0.12);color:#FFB000;border:1px solid rgba(255,176,0,0.35);}
+.insp-badge.human-verified{background:rgba(0,255,102,0.12);color:#00FF66;border:1px solid rgba(0,255,102,0.3);}
+/* PIXEL DIM note */
+.dim-note{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-top:2px;}
 `;
 
 // ─── HTML Skeleton ───────────────────────────────────────────────────────────
@@ -296,21 +346,53 @@ const REPLAY_HTML = `
 
 <div id="srModal">
   <div class="modal-box">
-    <h2 class="m-title">SONAR INTELLIGENCE ENGINE</h2>
-    <div class="m-sub">Analyzing Survey Frame<br><span id="mFn" style="color:#fff;">---</span><br><span id="mRes" style="color:rgba(255,255,255,0.4);">---</span></div>
-    <div class="radar-ring"></div>
-    <div class="m-status" id="mStat">AI ENGINE PROCESSING...</div>
-    <div>
-      <div class="stg-row" id="ms1"><span>SONAR INGESTION</span><span class="stg-st">[WAIT]</span></div>
-      <div class="stg-row" id="ms2"><span>IMAGE QUALITY ANALYSIS</span><span class="stg-st">[WAIT]</span></div>
-      <div class="stg-row" id="ms3"><span>PREPROCESSING</span><span class="stg-st">[WAIT]</span></div>
-      <div class="stg-row" id="ms4"><span>YOLOv11 ONNX DETECTION</span><span class="stg-st">[WAIT]</span></div>
-      <div class="stg-row" id="ms5"><span>ACOUSTIC EVIDENCE SCORING</span><span class="stg-st">[WAIT]</span></div>
-      <div class="stg-row" id="ms6"><span>ANOMALY SCORE FUSION</span><span class="stg-st">[WAIT]</span></div>
-      <div class="stg-row" id="ms7"><span>GEOREFERENCING</span><span class="stg-st">[WAIT]</span></div>
-      <div class="stg-row" id="ms8"><span>REPORT GENERATION</span><span class="stg-st">[WAIT]</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+      <div style="flex:1;">
+        <h2 class="m-title">SONAR INTELLIGENCE ENGINE</h2>
+        <div class="m-sub" style="margin-top:6px;">Processing Survey Frame</div>
+      </div>
+      <div class="sonar-sweep-wrap" style="flex-shrink:0;">
+        <div class="sonar-sweep">
+          <div class="sonar-grid-h"></div><div class="sonar-grid-v"></div>
+          <div class="sonar-ring-1"></div><div class="sonar-ring-2"></div>
+          <div class="sonar-fade"></div>
+          <div class="sonar-sweep-arm"></div>
+          <div class="sonar-center-dot"></div>
+        </div>
+      </div>
     </div>
-    <div class="m-timer">T+ <span id="mTmr">0.0</span>s</div>
+
+    <div class="modal-meta">
+      <div class="mm-card">
+        <div class="mm-label">ACTIVE FRAME</div>
+        <div class="mm-val" id="mFn" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">---</div>
+      </div>
+      <div class="mm-card">
+        <div class="mm-label">ANALYSIS STATUS</div>
+        <div class="mm-val processing" id="mStat">PROCESSING</div>
+      </div>
+      <div class="mm-card">
+        <div class="mm-label">ELAPSED TIME</div>
+        <div class="mm-val" style="color:#00F0FF;">T+ <span id="mTmr">0.0</span>s</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1px;">
+      <div class="stg-row" id="ms1"><span>SONAR INGESTION</span><span class="stg-st">[WAIT]</span></div>
+      <div class="stg-row" id="ms2"><span>IMAGE QUALITY</span><span class="stg-st">[WAIT]</span></div>
+      <div class="stg-row" id="ms3"><span>PREPROCESSING</span><span class="stg-st">[WAIT]</span></div>
+      <div class="stg-row" id="ms4"><span>AI DETECTION</span><span class="stg-st">[WAIT]</span></div>
+      <div class="stg-row" id="ms5"><span>ACOUSTIC EVIDENCE</span><span class="stg-st">[WAIT]</span></div>
+      <div class="stg-row" id="ms6"><span>ANOMALY FUSION</span><span class="stg-st">[WAIT]</span></div>
+      <div class="stg-row" id="ms7"><span>GEOREFERENCING</span><span class="stg-st">[WAIT]</span></div>
+      <div class="stg-row" id="ms8"><span>REPORT PREPARATION</span><span class="stg-st">[WAIT]</span></div>
+    </div>
+
+    <div class="m-error" id="mError">
+      <div class="m-error-title">ANALYSIS INTERRUPTED</div>
+      <div class="m-error-sub" id="mErrorMsg">Backend did not return a valid result.</div>
+      <button class="btn-retry" id="mRetryBtn">↺ RETRY ANALYSIS</button>
+    </div>
   </div>
 </div>
 `;
@@ -480,9 +562,12 @@ async function runAnalysis(c, onAnalysisComplete) {
     if (!blob && _selectedBlobUrl) { const r = await fetch(_selectedBlobUrl); blob = await r.blob(); }
     if (!blob) throw new Error("Please load a survey image first.");
 
+    // Sequential stage simulation tied to real onProgress events
     setStage(c, 1, "active");
-    await new Promise(r => setTimeout(r, 700));
-    setStage(c, 1, "done");
+    await new Promise(r => setTimeout(r, 600));
+    setStage(c, 1, "done"); setStage(c, 2, "active");
+    await new Promise(r => setTimeout(r, 400));
+    setStage(c, 2, "done"); setStage(c, 3, "active");
 
     const result = await runRealSonarAnalysis({
       imageFile: _selectedFile,
@@ -491,19 +576,24 @@ async function runAnalysis(c, onAnalysisComplete) {
       confidenceThreshold: 0.25,
       iouThreshold: 0.45,
       onProgress: (pct) => {
-        if (pct > 20) setStage(c, 2, "done");
-        if (pct > 38) setStage(c, 3, "done");
-        if (pct > 54) setStage(c, 4, "active");
-        if (pct > 80) { setStage(c, 4, "done"); setStage(c, 5, "done"); setStage(c, 6, "done"); }
+        if (pct > 40) { setStage(c, 3, "done"); setStage(c, 4, "active"); }
+        if (pct > 75) { setStage(c, 4, "done"); setStage(c, 5, "active"); }
+        if (pct > 88) { setStage(c, 5, "done"); setStage(c, 6, "active"); }
       }
     });
 
-    setStage(c, 4, "done"); setStage(c, 5, "done"); setStage(c, 6, "done");
+    setStage(c, 3, "done"); setStage(c, 4, "done");
+    setStage(c, 5, "done"); setStage(c, 6, "done");
     setStage(c, 7, result.has_gps ? "done" : "req");
     setStage(c, 8, "done");
-    c.querySelector("#mStat").textContent = "ANALYSIS COMPLETE";
-    c.querySelector("#mStat").style.color = "#00FF66";
-    await new Promise(r => setTimeout(r, 900));
+
+    // Update status card
+    const statEl = c.querySelector("#mStat");
+    statEl.textContent = "COMPLETE";
+    statEl.classList.remove("processing");
+    statEl.style.color = "#00FF66";
+
+    await new Promise(r => setTimeout(r, 800));
 
     clearInterval(_timerInterval);
     c.querySelector("#srModal").classList.remove("active");
@@ -515,16 +605,67 @@ async function runAnalysis(c, onAnalysisComplete) {
 
   } catch (err) {
     clearInterval(_timerInterval);
-    c.querySelector("#mStat").textContent = "SYSTEM FAILURE";
-    c.querySelector("#mStat").style.color = "#FF3366";
-    await new Promise(r => setTimeout(r, 1500));
-    c.querySelector("#srModal").classList.remove("active");
-    c.querySelector("#srScanLines").classList.remove("active");
-    alert(`Analysis Error:\n${err.message}`);
-  } finally {
+    // Show error state inside modal (do NOT auto-dismiss)
+    const statEl = c.querySelector("#mStat");
+    statEl.textContent = "FAILED";
+    statEl.classList.remove("processing");
+    statEl.style.color = "#FF3366";
+
+    const errBox = c.querySelector("#mError");
+    c.querySelector("#mErrorMsg").textContent = err.message || "Backend did not return a valid result.";
+    errBox.classList.add("show");
+
+    // Retry button
+    c.querySelector("#mRetryBtn").onclick = () => {
+      errBox.classList.remove("show");
+      statEl.textContent = "PROCESSING";
+      statEl.classList.add("processing");
+      statEl.style.color = "";
+      for (let i = 1; i <= 8; i++) setStage(c, i, "idle");
+      c.querySelector("#mTmr").textContent = "0.0";
+      _isRunning = false;
+      runBtn.disabled = false;
+      runAnalysis(c, onAnalysisComplete);
+    };
+
+    // Don't auto-close — user must retry or dismiss manually
     _isRunning = false;
     runBtn.disabled = false;
+    return; // skip finally re-enable
   }
+
+  _isRunning = false;
+  runBtn.disabled = false;
+}
+
+// ── TARGET ACQUIRED flash ──────────────────────────────────────────────────
+function showTargetAcquired(c, det, idx) {
+  const existing = c.querySelector(".ta-flash");
+  if (existing) existing.remove();
+
+  const flash = document.createElement("div");
+  flash.className = "ta-flash";
+  flash.innerHTML = `
+    <div class="ta-card">
+      <div class="ta-ring"></div>
+      <div class="ta-label">TARGET ACQUIRED</div>
+      <div class="ta-id">DET-${String(idx + 1).padStart(2, "0")}</div>
+      <div class="ta-class">${(det.classification || "Anomaly").split("(")[0].trim()}</div>
+      <div class="ta-sub">${det.id || ""}</div>
+      <div class="ta-status">AI DETECTED</div>
+    </div>
+  `;
+  c.querySelector("#srViewerCanvas").appendChild(flash);
+
+  // Fade in
+  requestAnimationFrame(() => {
+    flash.classList.add("show");
+    setTimeout(() => {
+      flash.style.transition = "opacity 0.5s ease";
+      flash.style.opacity = "0";
+      setTimeout(() => flash.remove(), 500);
+    }, 1200);
+  });
 }
 
 function presentResults(c, data) {
@@ -532,6 +673,7 @@ function presentResults(c, data) {
   const count = dets.length;
   const mainImg = c.querySelector("#srMainImg");
 
+  // Stage 1: Switch to DETECTIONS view if annotated image available
   if (data.annotated_image_url) {
     mainImg.src = data.annotated_image_url;
     c.querySelector("#vtbAnnot").classList.add("active");
@@ -554,6 +696,7 @@ function presentResults(c, data) {
   const detLayer = c.querySelector("#srDetLayer");
   const tlEvts   = c.querySelector("#tlEvts");
 
+  // Stage 2: Draw bounding boxes with staggered animation
   dets.forEach((det, idx) => {
     const bb = det.bounding_box;
     if (!bb) return;
@@ -578,10 +721,15 @@ function presentResults(c, data) {
     box.addEventListener("click", () => selectTarget(c, idx, data));
     detLayer.appendChild(box);
 
+    // Stage 2 stagger
     setTimeout(() => {
       box.classList.add("vis");
-      if (idx === 0) pulse.style.animation = "pulse-once 1s ease-out forwards";
-    }, 300 + idx * 120);
+      if (idx === 0) {
+        pulse.style.animation = "pulse-once 1s ease-out forwards";
+        // Stage 3: TARGET ACQUIRED flash on primary detection
+        showTargetAcquired(c, det, idx);
+      }
+    }, 200 + idx * 150);
 
     // Timeline event
     const ev = document.createElement("div");
@@ -593,7 +741,8 @@ function presentResults(c, data) {
     tlEvts.appendChild(ev);
   });
 
-  setTimeout(() => selectTarget(c, 0, data), 600);
+  // Stages 4–9: Inspector slides in after flash clears (~1.5s)
+  setTimeout(() => selectTarget(c, 0, data), 1400);
 }
 
 function selectTarget(c, idx, data) {
@@ -615,23 +764,38 @@ function selectTarget(c, idx, data) {
 }
 
 function populateInspector(c, det, idx, data) {
+  const insp = c.querySelector("#srInspector");
   c.querySelector("#inspEmpty").style.display = "none";
   c.querySelector("#inspBody").style.display  = "flex";
 
-  const state = _reviewStates[det.id || idx] || "unverified";
+  // Stage 8: Inspector slide-in
+  insp.classList.add("hidden");
+  requestAnimationFrame(() => {
+    insp.classList.remove("hidden");
+  });
+
+  // Stage 9: AI DETECTED / UNVERIFIED as default state (session only)
+  const savedState = _reviewStates[det.id || idx];
+  const badgeState = savedState || "ai-detected";
+  const badgeText  = savedState === "confirmed" ? "HUMAN VERIFIED"
+                   : savedState === "rejected"  ? "REJECTED"
+                   : "AI DETECTED";
+
   c.querySelector("#inspTId").textContent   = det.id || `TARGET T${String(idx + 1).padStart(2, "0")}`;
-  c.querySelector("#inspBadge").textContent = state.toUpperCase();
-  c.querySelector("#inspBadge").className   = `insp-badge ${state}`;
+  c.querySelector("#inspBadge").textContent = badgeText;
+  c.querySelector("#inspBadge").className   = `insp-badge ${savedState === "confirmed" ? "human-verified" : savedState === "rejected" ? "rejected" : "ai-detected"}`;
 
   const parts = (det.classification || "Unknown Anomaly").split("(");
   c.querySelector("#iClass").textContent    = parts[0].trim();
   c.querySelector("#iClassSub").textContent = parts[1] ? parts[1].replace(")", "").trim() : (det.raw_classification || "");
 
-  setMeter(c, "mfConf", "mConf", det.confidence,    "%");
-  setMeter(c, "mfAco",  "mAco",  det.texture_score,  "");
-  setMeter(c, "mfSea",  "mSea",  det.edge_score,     "");
-  setMeter(c, "mfAno",  "mAno",  det.anomaly_score,  "%");
+  // Stages 4–7: Meter animations with stagger
+  setTimeout(() => setMeter(c, "mfConf", "mConf", det.confidence,    "%"), 0);
+  setTimeout(() => setMeter(c, "mfAco",  "mAco",  det.texture_score, ""), 150);
+  setTimeout(() => setMeter(c, "mfSea",  "mSea",  det.edge_score,    ""), 300);
+  setTimeout(() => setMeter(c, "mfAno",  "mAno",  det.anomaly_score, "%"), 450);
 
+  // GPS
   const hasLat = det.latitude  != null;
   const hasLon = det.longitude != null;
   const latEl  = c.querySelector("#iLat");
@@ -641,17 +805,40 @@ function populateInspector(c, det, idx, data) {
   lonEl.textContent = hasLon ? det.longitude.toFixed(5) : "METADATA REQUIRED";
   lonEl.className   = `mv${hasLon ? "" : " na"}`;
 
+  // Bbox
   const bb = det.bounding_box;
   c.querySelector("#iBbox").textContent = bb
     ? `[${Math.round(bb.x1)}, ${Math.round(bb.y1)}, ${Math.round(bb.x2)}, ${Math.round(bb.y2)}]`
     : "---";
 
-  const dimEl = c.querySelector("#iDim");
-  const hasW  = typeof det.width_m  === "number";
-  const hasL  = typeof det.length_m === "number";
-  dimEl.textContent = (hasW && hasL) ? `${det.width_m.toFixed(1)}m × ${det.length_m.toFixed(1)}m` : "METADATA REQUIRED";
-  dimEl.className   = `mv${(hasW && hasL) ? "" : " na"}`;
+  // Dimensions — honest: physical only if sonar-scale metadata confirmed, otherwise pixel dims
+  const dimEl  = c.querySelector("#iDim");
+  const hasW   = typeof det.width_m  === "number";
+  const hasL   = typeof det.length_m === "number";
+  const hasPx  = bb;
+  if (hasW && hasL && det.scale_source) {
+    dimEl.textContent = `${det.width_m.toFixed(1)}m × ${det.length_m.toFixed(1)}m`;
+    dimEl.className   = "mv";
+    // Add provenance note
+    const note = document.createElement("div");
+    note.className = "dim-note";
+    note.textContent = "SOURCE: SONAR SCALE METADATA";
+    dimEl.parentElement.appendChild(note);
+  } else if (hasPx) {
+    const pxW = Math.round(bb.x2 - bb.x1);
+    const pxH = Math.round(bb.y2 - bb.y1);
+    dimEl.textContent = `${pxW} × ${pxH} px`;
+    dimEl.className   = "mv";
+    const note = document.createElement("div");
+    note.className = "dim-note";
+    note.textContent = "PIXEL DIMENSIONS  ·  PHYSICAL SCALE: METADATA REQUIRED";
+    dimEl.parentElement.appendChild(note);
+  } else {
+    dimEl.textContent = "METADATA REQUIRED";
+    dimEl.className   = "mv na";
+  }
 
+  // Review buttons
   c.querySelector("#btnConf").onclick = () => applyReview(c, det, idx, "confirmed");
   c.querySelector("#btnRej").onclick  = () => applyReview(c, det, idx, "rejected");
   c.querySelector("#btnEdit").onclick = () => {
@@ -683,11 +870,18 @@ function animCount(el, target, unit) {
 
 function applyReview(c, det, idx, state) {
   _reviewStates[det.id || idx] = state;
-  c.querySelector("#inspBadge").textContent = state.toUpperCase();
-  c.querySelector("#inspBadge").className   = `insp-badge ${state}`;
-  const boxes = c.querySelectorAll(".det-box");
-  if (boxes[idx]) { boxes[idx].classList.remove("conf","rej"); boxes[idx].classList.add(state === "confirmed" ? "conf" : "rej"); }
-  const evs = c.querySelectorAll(".tl-ev");
-  if (evs[idx]) { evs[idx].classList.remove("conf","rej"); evs[idx].classList.add(state === "confirmed" ? "conf" : "rej"); }
-}
 
+  // Session-only — clear note that this is not persisted to backend
+  const badge    = c.querySelector("#inspBadge");
+  const isConf   = state === "confirmed";
+  const isRej    = state === "rejected";
+  badge.textContent = isConf ? "HUMAN VERIFIED" : isRej ? "REJECTED" : "AI DETECTED";
+  badge.className   = `insp-badge ${isConf ? "human-verified" : isRej ? "rejected" : "ai-detected"}`;
+
+  // Smooth box color transition
+  const boxes = c.querySelectorAll(".det-box");
+  if (boxes[idx]) { boxes[idx].classList.remove("conf","rej"); boxes[idx].classList.add(isConf ? "conf" : "rej"); }
+
+  const evs = c.querySelectorAll(".tl-ev");
+  if (evs[idx]) { evs[idx].classList.remove("conf","rej"); evs[idx].classList.add(isConf ? "conf" : "rej"); }
+}
