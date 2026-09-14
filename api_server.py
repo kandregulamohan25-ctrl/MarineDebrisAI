@@ -19,6 +19,12 @@ import numpy as np
 import cv2
 import torch
 import gc
+import psutil
+import os
+
+def get_memory_mb():
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss / (1024 * 1024)
 
 # Limit threads to conserve memory on small free-tier servers
 torch.set_num_threads(1)
@@ -107,8 +113,17 @@ async def run_detection(
     6. Return real bounding boxes, classes, confidence, anomaly scores, and annotated image
     """
     try:
-        # Read image
+        mem_before = get_memory_mb()
+        
+        # Enforce upload size limit
+        MAX_UPLOAD_BYTES = 15 * 1024 * 1024
         image_bytes = await image.read()
+        
+        upload_size_mb = len(image_bytes) / (1024 * 1024)
+        print(f"Request: {upload_size_mb:.2f} MB uploaded. RSS before: {mem_before:.2f} MB")
+        
+        if len(image_bytes) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=f"Payload Too Large: Upload exceeds 15MB limit ({upload_size_mb:.2f}MB).")
         if not image_bytes:
             raise HTTPException(status_code=400, detail="Uploaded image file is empty.")
 
@@ -124,6 +139,9 @@ async def run_detection(
             original_image = original_image.convert("RGB")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Unable to decode image file: {e}")
+            
+        mem_after_decode = get_memory_mb()
+        print(f"After decode/resize: {original_image.size}. RSS: {mem_after_decode:.2f} MB")
 
         original_width, original_height = original_image.size
 
@@ -157,8 +175,20 @@ async def run_detection(
         _, annot_buffer = cv2.imencode(".jpg", annotated_bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 92])
         annotated_b64 = "data:image/jpeg;base64," + base64.b64encode(annot_buffer).decode("utf-8")
 
-        # Encode original image for browser display
-        original_b64 = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode("utf-8")
+        # Encode bounded original image for browser display, NOT the massive upload
+        display_buffer = io.BytesIO()
+        original_image.save(display_buffer, format="JPEG", quality=85)
+        display_bytes = display_buffer.getvalue()
+        original_b64 = "data:image/jpeg;base64," + base64.b64encode(display_bytes).decode("utf-8")
+        
+        # Free heavy variables before constructing JSON response
+        del image_bytes
+        del display_bytes
+        del annot_buffer
+        gc.collect()
+        
+        mem_before_resp = get_memory_mb()
+        print(f"Inference took {inference_time:.2f}s. RSS before response: {mem_before_resp:.2f} MB")
 
         # 4. Coordinate transformation back to original image resolution
         scale = min(TARGET_WIDTH / original_width, TARGET_HEIGHT / original_height)
