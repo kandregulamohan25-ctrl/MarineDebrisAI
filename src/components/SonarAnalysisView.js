@@ -20,7 +20,7 @@ const REPLAY_CSS = `
 #sonarReplayRoot {
   display:flex;flex-direction:column;width:100%;height:100%;
   background:#030B14;color:#fff;
-  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  font-family:var(--font-sans);
   position:relative;overflow:hidden;
   background-image:linear-gradient(rgba(0,240,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,0.04) 1px,transparent 1px);
   background-size:40px 40px;
@@ -71,11 +71,11 @@ const REPLAY_CSS = `
 .cm.bl{bottom:10px;left:10px;border-bottom:2px solid rgba(0,240,255,0.35);border-left:2px solid rgba(0,240,255,0.35);}
 .cm.br{bottom:10px;right:10px;border-bottom:2px solid rgba(0,240,255,0.35);border-right:2px solid rgba(0,240,255,0.35);}
 #srHud{position:absolute;top:12px;left:14px;pointer-events:none;}
-.hud-line{font-family:'Courier New',monospace;font-size:11px;color:rgba(0,240,255,0.5);line-height:1.7;}
+.hud-line{font-family:var(--font-mono);font-size:11px;color:rgba(0,240,255,0.5);line-height:1.7;}
 /* TIMELINE */
 #srTimeline{border-top:1px solid rgba(0,240,255,0.12);background:rgba(10,25,47,0.88);padding:10px 16px 13px;flex-shrink:0;}
 .tl-row{display:flex;align-items:center;gap:10px;}
-.tl-ctr{font-family:'Courier New',monospace;font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap;}
+.tl-ctr{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap;}
 .tl-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);font-size:12px;padding:3px 9px;cursor:pointer;transition:all 0.15s;}
 .tl-btn:hover{background:rgba(0,240,255,0.1);color:#00F0FF;border-color:rgba(0,240,255,0.3);}
 .tl-track{flex:1;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;position:relative;cursor:pointer;margin:12px 0;}
@@ -101,13 +101,13 @@ const REPLAY_CSS = `
 .mr{margin-bottom:9px;}
 .mr-hdr{display:flex;justify-content:space-between;margin-bottom:4px;}
 .mr-name{font-size:11px;color:rgba(255,255,255,0.6);}
-.mr-val{font-family:'Courier New',monospace;font-size:11px;color:#fff;}
+.mr-val{font-family:var(--font-mono);font-size:11px;color:#fff;}
 .mbar{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
 .mfill{height:100%;border-radius:3px;width:0%;transition:width 0.9s cubic-bezier(0.1,0.8,0.2,1);}
 .mfill.c{background:#00F0FF;}.mfill.a{background:#FFB000;}.mfill.g{background:#00FF66;}
 .meta-r{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
 .ml{font-size:10px;color:rgba(255,255,255,0.4);}
-.mv{font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.8);}
+.mv{font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.8);}
 .mv.na{color:rgba(255,255,255,0.25);}
 .act-row{display:flex;gap:8px;}
 .btn-conf{flex:1;padding:9px 0;font-size:11px;font-weight:700;letter-spacing:1px;background:rgba(0,255,102,0.1);border:1px solid rgba(0,255,102,0.3);color:#00FF66;cursor:pointer;transition:all 0.2s;}
@@ -157,7 +157,7 @@ const REPLAY_CSS = `
 .modal-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 .mm-card{background:rgba(0,240,255,0.04);border:1px solid rgba(0,240,255,0.12);padding:10px 12px;}
 .mm-label{font-size:9px;letter-spacing:2px;color:rgba(0,240,255,0.5);font-weight:700;margin-bottom:4px;}
-.mm-val{font-family:'Courier New',monospace;font-size:12px;color:#fff;}
+.mm-val{font-family:var(--font-mono);font-size:12px;color:#fff;}
 .mm-val.processing{color:#00F0FF;animation:pulse-text 1.4s ease-in-out infinite;}
 @keyframes pulse-text{0%,100%{opacity:1;}50%{opacity:0.4;}}
 /* STAGES */
@@ -166,7 +166,7 @@ const REPLAY_CSS = `
 @keyframes stg-pulse{0%,100%{background:rgba(0,240,255,0.04);}50%{background:rgba(0,240,255,0.09);}}
 .stg-row.done{color:#00FF66;border-left-color:#00FF66;}
 .stg-row.req{color:#FFB000;border-left-color:#FFB000;}
-.stg-st{font-family:'Courier New',monospace;font-size:10px;}
+.stg-st{font-family:var(--font-mono);font-size:10px;}
 /* ERROR STATE */
 .m-error{background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.25);padding:14px;text-align:center;display:none;}
 .m-error.show{display:block;}
@@ -187,7 +187,7 @@ const REPLAY_CSS = `
 @keyframes ta-expand{0%{transform:scale(0.5);opacity:1;}100%{transform:scale(3);opacity:0;}}
 /* m-timer */
 .m-timer-row{display:flex;justify-content:space-between;align-items:center;}
-.m-timer{font-family:'Courier New',monospace;font-size:11px;color:rgba(255,255,255,0.4);}
+.m-timer{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,0.4);}
 /* SMALL UTIL */
 .sb-btn{padding:4px 10px;font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.65);cursor:pointer;transition:all 0.15s;}
 .sb-btn:hover{background:rgba(0,240,255,0.08);color:#00F0FF;border-color:rgba(0,240,255,0.3);}
@@ -252,7 +252,7 @@ const REPLAY_HTML = `
       <span class="vtb-lbl">CONTRAST</span>
       <input type="range" class="vtb-range" id="vtbCo" min="50" max="200" value="100">
       <div class="vtb-sep"></div>
-      <span class="vtb-lbl" id="vtbFrm" style="color:rgba(0,240,255,0.5);font-family:'Courier New',monospace;">FRAME 0001</span>
+      <span class="vtb-lbl" id="vtbFrm" style="color:rgba(0,240,255,0.5);font-family:var(--font-mono);">FRAME 0001</span>
     </div>
 
     <div id="srViewerCanvas">

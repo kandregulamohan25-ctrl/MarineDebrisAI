@@ -29,9 +29,9 @@
   --text-dark: #020810;
   --text-accent: #00f0ff;
 
-  --font-mono: 'Space Mono', 'Roboto Mono', 'Courier New', monospace;
-  --font-sans: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-display: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'JetBrains Mono', monospace;
+  --font-display: 'JetBrains Mono', monospace;
 
   --spacing-xs: 4px;
   --spacing-sm: 8px;
