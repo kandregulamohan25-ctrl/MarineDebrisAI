@@ -1,4 +1,5 @@
 import { runRealSonarAnalysis } from "../services/api.js";
+import { MissionSession } from "../state/MissionSession.js";
 
 // ─── Module-level state ─────────────────────────────────────────────────────
 let _selectedFile     = null;
@@ -225,7 +226,7 @@ const REPLAY_HTML = `
     <button class="sb-btn" id="srTS2">TEST_TARGET_BETA</button>
     <button class="sb-btn" id="srTUp">+ UPLOAD</button>
     <div class="sr-pill"><div class="sr-dot" id="srDot"></div><span id="srStatusTxt">REPLAY MODE</span></div>
-    <button class="demo-btn" title="SIH Demo Mode — Coming Soon">SIH DEMO</button>
+    <button class="demo-btn" id="sihDemoBtn">SIH DEMO</button>
   </div>
 </div>
 
@@ -422,6 +423,12 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
   $("srTS1").onclick   = () => { _selectedFile = null; loadSurvey(container, "/samples/monrovia-side-scan-sonar-IVER-hires.png", "monrovia.png", onAnalysisComplete); };
   $("srTS2").onclick   = () => { _selectedFile = null; loadSurvey(container, "/samples/sonar_test.jpg", "sonar_test.jpg", onAnalysisComplete); };
   $("srTUp").onclick   = () => $("srFileInput").click();
+  
+  if ($("sihDemoBtn")) {
+    $("sihDemoBtn").onclick = () => {
+      MissionSession.dispatch({ type: 'START_DEMO' });
+    };
+  }
 
   // ── Viewer controls ───────────────────────────────────────────────────────
   const mainImg = $("srMainImg");
@@ -451,23 +458,41 @@ export function renderSonarAnalysisView({ currentAnalysis, onAnalysisComplete })
   // ── Run Analysis ──────────────────────────────────────────────────────────
   $("srRunBtn").onclick = () => runAnalysis(container, onAnalysisComplete);
 
-  // ── Load existing analysis ────────────────────────────────────────────────
-  if (currentAnalysis) {
-    _selectedBlobUrl  = currentAnalysis.image_url || "";
-    _selectedFilename = currentAnalysis.filename  || "survey.jpg";
-    _selectedFile     = null;
-    _lastResult       = currentAnalysis;
+  // ── Load existing analysis or active frame ────────────────────────────────
+  const globalState = MissionSession.getState();
+  
+  if (globalState.activeFrame || globalState.analysisResult) {
+    const frame = globalState.activeFrame;
+    const res = globalState.analysisResult;
+    
+    _selectedBlobUrl  = res?.image_url || frame?.url || "";
+    _selectedFilename = res?.filename || frame?.filename || "survey.jpg";
+    _selectedFile     = frame?.file || null;
+    _lastResult       = res;
+    
     showWorkspace(container);
-    mainImg.src = currentAnalysis.annotated_image_url || currentAnalysis.image_url || "";
+    mainImg.src = res?.annotated_image_url || res?.image_url || frame?.url || "";
+    
     $("hudFn").textContent  = `OP: ${_selectedFilename}`;
     $("mFn").textContent    = _selectedFilename;
-    if (currentAnalysis.annotated_image_url) {
+    
+    if (res?.annotated_image_url) {
       $("vtbAnnot").classList.add("active"); $("vtbOrig").classList.remove("active");
     }
-    if (currentAnalysis.image_dimensions) {
-      $("hudRes").textContent = `RES: ${currentAnalysis.image_dimensions.width}x${currentAnalysis.image_dimensions.height}`;
+    if (res?.image_dimensions) {
+      $("hudRes").textContent = `RES: ${res.image_dimensions.width}x${res.image_dimensions.height}`;
     }
-    presentResults(container, currentAnalysis);
+    
+    if (res) {
+      _reviewStates = { ...globalState.reviewStates };
+      presentResults(container, res);
+      if (globalState.selectedDetectionId != null) {
+         const idx = res.detections?.findIndex(d => (d.id || d.idx) === globalState.selectedDetectionId);
+         if (idx >= 0) {
+             setTimeout(() => selectTarget(container, idx, res), 100);
+         }
+      }
+    }
   }
 
   return container;
@@ -483,6 +508,7 @@ function showWorkspace(c) {
 }
 
 function loadSurvey(c, url, filename, onAnalysisComplete) {
+  MissionSession.dispatch({ type: 'SET_FRAME', payload: { file: _selectedFile, url, filename } });
   _selectedBlobUrl  = url;
   _selectedFilename = filename;
   _lastResult       = null;
@@ -582,10 +608,13 @@ async function runAnalysis(c, onAnalysisComplete) {
       }
     });
 
-    setStage(c, 3, "done"); setStage(c, 4, "done");
-    setStage(c, 5, "done"); setStage(c, 6, "done");
-    setStage(c, 7, result.has_gps ? "done" : "req");
+    setStage(c, 6, "done"); setStage(c, 7, "active");
+    await new Promise(r => setTimeout(r, 400));
+    setStage(c, 7, result.has_gps ? "done" : "req"); setStage(c, 8, "active");
+    await new Promise(r => setTimeout(r, 400));
     setStage(c, 8, "done");
+
+    MissionSession.dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
 
     // Update status card
     const statEl = c.querySelector("#mStat");
@@ -749,6 +778,7 @@ function selectTarget(c, idx, data) {
   const dets = data.detections || [];
   if (!dets[idx]) return;
   _activeTargetIdx = idx;
+  MissionSession.dispatch({ type: 'SET_SELECTED_TARGET', payload: dets[idx].id || idx });
 
   c.querySelectorAll(".det-box").forEach((b, i) => {
     b.classList.toggle("sel", i === idx);
@@ -870,6 +900,7 @@ function animCount(el, target, unit) {
 
 function applyReview(c, det, idx, state) {
   _reviewStates[det.id || idx] = state;
+  MissionSession.dispatch({ type: 'SET_TARGET_REVIEW', payload: { id: det.id || idx, status: state } });
 
   // Session-only — clear note that this is not persisted to backend
   const badge    = c.querySelector("#inspBadge");

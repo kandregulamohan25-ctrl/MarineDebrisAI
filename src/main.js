@@ -9,6 +9,9 @@ import './styles/components.css';
 import './styles/sonar-viewer.css';
 import './styles/map.css';
 
+import { MissionSession } from './state/MissionSession.js';
+import { renderDemoController } from './components/DemoController.js';
+
 import { renderSidebar } from './components/Sidebar.js';
 import { renderHeader } from './components/Header.js';
 import { renderDashboardView } from './components/DashboardView.js';
@@ -18,13 +21,6 @@ import { renderGeospatialMapView } from './components/GeospatialMapView.js';
 import { renderReportsView } from './components/ReportsView.js';
 import { renderSystemInfoView } from './components/SystemInfoView.js';
 import { runRealSonarAnalysis, checkBackendHealth } from './services/api.js';
-
-// Application State
-const state = {
-  activeTab: 'dashboard',
-  currentAnalysis: null, // Holds the real YOLO detection output from Python backend
-  isBackendOnline: false
-};
 
 const TAB_TITLES = {
   dashboard: {
@@ -55,22 +51,56 @@ const TAB_TITLES = {
 
 async function initApp() {
   const health = await checkBackendHealth();
-  state.isBackendOnline = health.connected;
+  MissionSession.dispatch({ type: 'SET_BACKEND_ONLINE', payload: health.connected });
   renderAppShell();
 }
 
+let lastRenderedTab = 'dashboard';
+let lastDemoMode = false;
+
+MissionSession.subscribe((state) => {
+  let needsRender = false;
+  
+  if (state.activeTab !== lastRenderedTab) {
+    lastRenderedTab = state.activeTab;
+    needsRender = true;
+  }
+  
+  if (state.demoMode !== lastDemoMode) {
+    lastDemoMode = state.demoMode;
+    needsRender = true;
+  }
+
+  // If we are not in analysis tab, it's safe to re-render the whole shell when state changes (like analysis completing)
+  if (!needsRender && state.activeTab !== 'analysis' && state.analysisStatus === 'complete') {
+    needsRender = true;
+  }
+
+  if (needsRender) {
+    renderAppShell(); 
+  }
+});
+
+window.addEventListener('navToTarget', (e) => {
+  MissionSession.dispatch({ type: 'SET_SELECTED_TARGET', payload: e.detail });
+  MissionSession.dispatch({ type: 'SET_TAB', payload: 'analysis' });
+});
+
 function renderAppShell() {
+  const state = MissionSession.getState();
   const appRoot = document.getElementById('app');
   if (!appRoot) return;
   appRoot.innerHTML = '';
 
-  const sidebar = renderSidebar(state.activeTab, handleTabSelect, state.currentAnalysis);
+  const sidebar = renderSidebar(state.activeTab, (tabId) => {
+    MissionSession.dispatch({ type: 'SET_TAB', payload: tabId });
+  }, state.analysisResult);
 
   const main = document.createElement('main');
   main.className = 'app-main';
 
   const tabMeta = TAB_TITLES[state.activeTab] || TAB_TITLES.dashboard;
-  const header = renderHeader(tabMeta.title, tabMeta.subtitle, state.currentAnalysis);
+  const header = renderHeader(tabMeta.title, tabMeta.subtitle, state.analysisResult);
 
   const contentViewport = document.createElement('div');
   contentViewport.className = 'content-viewport';
@@ -82,115 +112,50 @@ function renderAppShell() {
   appRoot.appendChild(sidebar);
   appRoot.appendChild(main);
 
-  renderCurrentTab();
-}
-
-function handleTabSelect(tabId) {
-  state.activeTab = tabId;
-
-  // Update navigation highlighting
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.classList.toggle('active', item.getAttribute('data-tab') === tabId);
-  });
-
-  // Update header text
-  const tabMeta = TAB_TITLES[tabId] || TAB_TITLES.dashboard;
-  const pageTitle = document.getElementById('pageTitle');
-  const pageSubtitle = document.getElementById('pageSubtitle');
-  if (pageTitle) pageTitle.textContent = tabMeta.title;
-  if (pageSubtitle) pageSubtitle.textContent = tabMeta.subtitle;
-
-  renderCurrentTab();
-}
-
-/**
- * Handle real detection directly from Dashboard
- */
-async function handleRunDetectionFromDashboard(options) {
-  try {
-    const result = await runRealSonarAnalysis({
-      ...options,
-      confidenceThreshold: 0.25,
-      iouThreshold: 0.45
-    });
-    state.currentAnalysis = result;
-    renderAppShell();
-  } catch (err) {
-    throw err;
+  // Render the demo controller if we are in demo mode
+  if (state.demoMode) {
+    appRoot.appendChild(renderDemoController());
   }
+
+  renderCurrentTab(contentViewport, state);
 }
 
-/**
- * Trigger analysis of a verified sample directly through the Python backend
- */
-async function handleAnalyzeSample(sampleUrl, sampleFilename, footprint) {
-  handleTabSelect('analysis');
-  try {
-    const resp = await fetch(sampleUrl);
-    const blob = await resp.blob();
-
-    const result = await runRealSonarAnalysis({
-      imageBlob: blob,
-      filename: sampleFilename,
-      footprint: footprint,
-      confidenceThreshold: 0.25,
-      iouThreshold: 0.45,
-      onProgress: (pct, msg) => {
-        const msgEl = document.getElementById('progressMessage');
-        const cardEl = document.getElementById('progressCard');
-        if (cardEl) cardEl.style.display = 'block';
-        if (msgEl) msgEl.textContent = `${msg} (${pct}%)`;
-      }
-    });
-
-    state.currentAnalysis = result;
-    renderAppShell();
-    handleTabSelect('results');
-  } catch (err) {
-    alert(`AI Analysis Error:\n${err.message}`);
-  }
+function handleRunDetectionFromDashboard(options) {
+  // This will be replaced by the direct MissionSession actions inside DashboardView
 }
 
-function renderCurrentTab() {
-  const viewport = document.getElementById('contentViewport');
-  if (!viewport) return;
+function renderCurrentTab(viewport, state) {
   viewport.innerHTML = '';
 
   switch (state.activeTab) {
     case 'dashboard':
       viewport.appendChild(renderDashboardView({
-        currentAnalysis: state.currentAnalysis,
-        onNavigate: (tabId) => handleTabSelect(tabId),
-        onRunDetection: handleRunDetectionFromDashboard
+        currentAnalysis: state.analysisResult
       }));
       break;
 
     case 'analysis':
+      // The SonarWorkspace will now pull from MissionSession
       viewport.appendChild(renderSonarAnalysisView({
-        currentAnalysis: state.currentAnalysis,
-        onAnalysisComplete: (realResult) => {
-          state.currentAnalysis = realResult;
-          // renderAppShell(); // We let the view update itself via the cinematic reveal
-        }
+        currentAnalysis: state.analysisResult
       }));
       break;
 
     case 'results':
       viewport.appendChild(renderDetectionResultsView({
-        scanData: state.currentAnalysis,
-        onReanalyze: () => handleTabSelect('analysis')
+        scanData: state.analysisResult
       }));
       break;
 
     case 'map':
       viewport.appendChild(renderGeospatialMapView({
-        scanData: state.currentAnalysis
+        scanData: state.analysisResult
       }));
       break;
 
     case 'reports':
       viewport.appendChild(renderReportsView({
-        scanData: state.currentAnalysis
+        scanData: state.analysisResult
       }));
       break;
 
@@ -200,11 +165,13 @@ function renderCurrentTab() {
 
     default:
       viewport.appendChild(renderDashboardView({
-        currentAnalysis: state.currentAnalysis,
-        onNavigate: (tabId) => handleTabSelect(tabId),
-        onRunDetection: handleRunDetectionFromDashboard
+        currentAnalysis: state.analysisResult
       }));
   }
 }
+
+// Because MissionSession.subscribe triggers renderAppShell, we must debounce or wrap it carefully
+// Actually, let's remove the global subscription and only trigger renderAppShell on SET_TAB, SET_FRAME, SET_ANALYSIS_RESULT, START_DEMO, etc.
+
 
 document.addEventListener('DOMContentLoaded', initApp);

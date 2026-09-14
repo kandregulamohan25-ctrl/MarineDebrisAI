@@ -4,6 +4,7 @@
  */
 
 import { downloadJsonReport, downloadCsvReport } from '../services/reportExporter.js';
+import { MissionSession } from '../state/MissionSession.js';
 
 export function renderDetectionResultsView({ scanData, onReanalyze }) {
   const container = document.createElement('div');
@@ -101,8 +102,12 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
           <tbody>
             ${detections.map(d => {
               const classType = (d.classification || 'other').toLowerCase();
+              const isSelected = MissionSession.getState().selectedDetectionId === d.id;
               return `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(0, 240, 255, 0.05)'" onmouseout="this.style.background='transparent'">
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; cursor: pointer; background: ${isSelected ? 'rgba(0,240,255,0.1)' : 'transparent'};" 
+                    onmouseover="this.style.background='rgba(0, 240, 255, 0.05)'" 
+                    onmouseout="this.style.background='${isSelected ? 'rgba(0,240,255,0.1)' : 'transparent'}'" 
+                    onclick="window.dispatchEvent(new CustomEvent('navToTarget', {detail: '${d.id}'}))">
                   <td style="padding: 12px 16px; color: var(--text-main);">${d.id}</td>
                   <td style="padding: 12px 16px;">
                     <span style="background: var(--color-info-bg); color: var(--color-info); padding: 2px 6px; border-radius: 2px; font-weight: 700; font-size: 10px; border: 1px solid var(--color-info);">

@@ -3,6 +3,9 @@
  * Redesigned as a Naval Mission-Control Interface
  */
 
+import { MissionSession } from '../state/MissionSession.js';
+import { runRealSonarAnalysis } from '../services/api.js';
+
 export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetection }) {
   const container = document.createElement('div');
   container.className = 'dashboard-view';
@@ -234,15 +237,22 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
   `;
 
   // Interaction Logic
-  let selectedFile = null;
-  let selectedBlobUrl = null;
-  let selectedFilename = null;
-
   const dropZone = container.querySelector('#dashDropZone');
   const fileInput = container.querySelector('#dashFileInput');
   const uploadLabel = container.querySelector('#dashUploadLabel');
   const runBtn = container.querySelector('#dashRunBtn');
   const statusMsg = container.querySelector('#dashStatusMsg');
+
+  // We read the initial selected file from the global MissionSession if available
+  
+  let selectedFile = MissionSession.getState().activeFrame?.file || null;
+  let selectedBlobUrl = MissionSession.getState().activeFrame?.url || null;
+  let selectedFilename = MissionSession.getState().activeFrame?.filename || null;
+
+  if (selectedFilename) {
+    uploadLabel.textContent = selectedFilename;
+    uploadLabel.style.color = 'var(--color-primary)';
+  }
 
   dropZone.addEventListener('click', () => fileInput.click());
 
@@ -275,10 +285,11 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
 
   function handleFileSelect(file) {
     selectedFile = file;
-    selectedBlobUrl = null;
+    selectedBlobUrl = URL.createObjectURL(file);
     selectedFilename = file.name;
     uploadLabel.textContent = file.name;
     uploadLabel.style.color = 'var(--color-primary)';
+    MissionSession.dispatch({ type: 'SET_FRAME', payload: { file, url: selectedBlobUrl, filename: file.name }});
   }
 
   // Sample buttons
@@ -288,6 +299,7 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
     selectedFilename = 'monrovia.png';
     uploadLabel.textContent = 'CALIBRATION: TEST_TARGET_ALPHA LOADED';
     uploadLabel.style.color = 'var(--color-success)';
+    MissionSession.dispatch({ type: 'SET_FRAME', payload: { file: null, url: selectedBlobUrl, filename: selectedFilename }});
   });
 
   container.querySelector('#dashSampleDebris')?.addEventListener('click', () => {
@@ -296,6 +308,7 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
     selectedFilename = 'sonar_test.jpg';
     uploadLabel.textContent = 'CALIBRATION: TEST_TARGET_BETA LOADED';
     uploadLabel.style.color = 'var(--color-success)';
+    MissionSession.dispatch({ type: 'SET_FRAME', payload: { file: null, url: selectedBlobUrl, filename: selectedFilename }});
   });
 
   // Run AI Detection button
@@ -303,6 +316,7 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
     if (!selectedFile && !selectedBlobUrl) {
       selectedBlobUrl = '/samples/monrovia-side-scan-sonar-IVER-hires.png';
       selectedFilename = 'monrovia.png';
+      MissionSession.dispatch({ type: 'SET_FRAME', payload: { file: null, url: selectedBlobUrl, filename: selectedFilename }});
     }
 
     statusMsg.style.display = 'block';
@@ -310,6 +324,7 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
     runBtn.disabled = true;
     runBtn.textContent = 'SCANNING...';
     runBtn.style.animation = 'pulse 1.5s infinite';
+    MissionSession.dispatch({ type: 'SET_ANALYSIS_STATUS', payload: { status: 'processing' }});
 
     try {
       let blob = selectedFile;
@@ -318,16 +333,21 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
         blob = await resp.blob();
       }
 
-      await onRunDetection({
+      const result = await runRealSonarAnalysis({
         imageFile: selectedFile,
         imageBlob: !selectedFile ? blob : null,
         filename: selectedFilename,
+        confidenceThreshold: 0.25,
+        iouThreshold: 0.45,
         onProgress: (pct, msg) => {
           statusMsg.textContent = `[${pct}%] ${msg.toUpperCase()}`;
         }
       });
+      
+      MissionSession.dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
     } catch (err) {
       alert(`SYSTEM FAILURE:\n${err.message}`);
+      MissionSession.dispatch({ type: 'SET_ANALYSIS_STATUS', payload: { status: 'error', error: err.message }});
       statusMsg.style.display = 'none';
       runBtn.disabled = false;
       runBtn.textContent = 'INITIATE SCAN';
@@ -335,5 +355,7 @@ export function renderDashboardView({ currentAnalysis, onNavigate, onRunDetectio
     }
   });
 
+  // Since we load this async but must return the container synchronously in vanilla JS,
+  // the container is returned immediately and events are bound in the closure.
   return container;
 }
