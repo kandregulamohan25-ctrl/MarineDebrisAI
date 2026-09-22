@@ -238,7 +238,7 @@ export function renderDetectionResultsView({ scanData, onReanalyze }) {
   });
 
   // Clean up
-  container.addEventListener('DOMNodeRemovedFromDocument', () => unsub());
+  
 
   // Add local styles if needed
   if (!document.getElementById('dashStyles')) {

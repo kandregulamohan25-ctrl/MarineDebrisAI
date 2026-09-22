@@ -58,6 +58,7 @@ async function initApp() {
 let lastRenderedTab = 'dashboard';
 let lastDemoMode = false;
 
+let lastAnalysisResult = null;
 MissionSession.subscribe((state) => {
   let needsRender = false;
   
@@ -70,9 +71,9 @@ MissionSession.subscribe((state) => {
     lastDemoMode = state.demoMode;
     needsRender = true;
   }
-
-  // If we are not in analysis tab, it's safe to re-render the whole shell when state changes (like analysis completing)
-  if (!needsRender && state.activeTab !== 'analysis' && state.analysisStatus === 'complete') {
+  
+  if (state.analysisResult !== lastAnalysisResult) {
+    lastAnalysisResult = state.analysisResult;
     needsRender = true;
   }
 
@@ -163,3 +164,5 @@ function renderCurrentTab(viewport, state) {
      viewport.appendChild(tabCache[cacheKey]);
   }
 }
+
+document.addEventListener('DOMContentLoaded', initApp);

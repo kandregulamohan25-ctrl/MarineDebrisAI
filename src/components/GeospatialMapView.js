@@ -305,7 +305,7 @@ export function renderGeospatialMapView({ scanData }) {
   });
 
   // Cleanup on disconnect
-  container.addEventListener('DOMNodeRemovedFromDocument', () => unsub());
+  
 
   // Add custom style for tooltips & animations if not already present
   if (!document.getElementById('map-extra-styles')) {
